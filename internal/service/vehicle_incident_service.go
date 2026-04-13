@@ -20,8 +20,8 @@ type VehicleIncidentService interface {
 
 type CreateVehicleIncidentInput struct {
 	VehicleID    uint
-	CustomerID   uint
-	RentalID     uint
+	CustomerID   *uint
+	RentalID     *uint
 	IncidentDate time.Time
 	IncidentType constant.IncidentType
 	Description  string
@@ -86,10 +86,10 @@ func (s *vehicleIncidentService) Update(ctx context.Context, id uint, data Updat
 		incident.VehicleID = *data.VehicleID
 	}
 	if data.CustomerID != nil {
-		incident.CustomerID = *data.CustomerID
+		incident.CustomerID = data.CustomerID
 	}
 	if data.RentalID != nil {
-		incident.RentalID = *data.RentalID
+		incident.RentalID = data.RentalID
 	}
 	if data.IncidentDate != nil {
 		incident.IncidentDate = *data.IncidentDate

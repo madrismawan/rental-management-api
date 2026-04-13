@@ -23,10 +23,10 @@ func ApplyVehicleIncidentUpdate(incident *entity.VehicleIncident, req dto.Update
 		incident.VehicleID = *req.VehicleID
 	}
 	if req.CustomerID != nil {
-		incident.CustomerID = *req.CustomerID
+		incident.CustomerID = req.CustomerID
 	}
 	if req.RentalID != nil {
-		incident.RentalID = *req.RentalID
+		incident.RentalID = req.RentalID
 	}
 	if req.IncidentDate != nil {
 		incident.IncidentDate = *req.IncidentDate

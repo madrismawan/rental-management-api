@@ -8,8 +8,8 @@ import (
 type VehicleIncident struct {
 	ID           uint                           `gorm:"primaryKey;column:id"`
 	VehicleID    uint                           `gorm:"column:vehicle_id;not null;index"`
-	CustomerID   uint                           `gorm:"column:customer_id;not null;index"`
-	RentalID     uint                           `gorm:"column:rental_id;not null;index"`
+	CustomerID   *uint                          `gorm:"column:customer_id;index"`
+	RentalID     *uint                          `gorm:"column:rental_id;index"`
 	IncidentDate time.Time                      `gorm:"column:incident_date;not null"`
 	IncidentType constant.IncidentType          `gorm:"column:incident_type;type:varchar(100);not null"`
 	Description  string                         `gorm:"column:description;type:text"`
@@ -18,9 +18,9 @@ type VehicleIncident struct {
 	CreatedAt    time.Time                      `gorm:"column:created_at;autoCreateTime"`
 	UpdatedAt    time.Time                      `gorm:"column:updated_at;autoUpdateTime"`
 
-	Vehicle  Vehicle  `gorm:"foreignKey:VehicleID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
-	Customer Customer `gorm:"foreignKey:CustomerID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
-	Rental   Rental   `gorm:"foreignKey:RentalID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
+	Vehicle  Vehicle   `gorm:"foreignKey:VehicleID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
+	Customer *Customer `gorm:"foreignKey:CustomerID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
+	Rental   *Rental   `gorm:"foreignKey:RentalID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
 }
 
 func (VehicleIncident) TableName() string {

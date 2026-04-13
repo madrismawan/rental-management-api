@@ -23,7 +23,7 @@ func main() {
 		log.Fatalf("database migration failed: %v", err)
 	}
 
-	if err := database.SeedAdminUser(db); err != nil {
+	if err := database.SeedAll(db); err != nil {
 		log.Fatalf("database seed failed: %v", err)
 	}
 
