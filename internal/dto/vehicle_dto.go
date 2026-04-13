@@ -32,7 +32,7 @@ type UpdateVehicleRequest struct {
 	Notes       *string                 `json:"notes"`
 }
 
-type VehicleResponse struct {
+type VehicleResource struct {
 	ID          uint                   `json:"id"`
 	PlateNumber string                 `json:"plate_number"`
 	Color       string                 `json:"color"`

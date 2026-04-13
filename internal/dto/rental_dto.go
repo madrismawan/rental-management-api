@@ -44,7 +44,7 @@ type UpdateRentalRequest struct {
 	MileageEnd            *int                 `json:"mileage_end"`
 }
 
-type RentalResponse struct {
+type RentalResource struct {
 	ID                    uint                `json:"id"`
 	CustomerID            uint                `json:"customer_id"`
 	VehicleID             uint                `json:"vehicle_id"`

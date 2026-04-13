@@ -45,8 +45,8 @@ func ApplyVehicleIncidentUpdate(incident *entity.VehicleIncident, req dto.Update
 	}
 }
 
-func ToVehicleIncidentResponse(incident entity.VehicleIncident) dto.VehicleIncidentResponse {
-	return dto.VehicleIncidentResponse{
+func ToVehicleIncidentResource(incident entity.VehicleIncident) dto.VehicleIncidentResource {
+	return dto.VehicleIncidentResource{
 		ID:           incident.ID,
 		VehicleID:    incident.VehicleID,
 		CustomerID:   incident.CustomerID,
@@ -61,10 +61,10 @@ func ToVehicleIncidentResponse(incident entity.VehicleIncident) dto.VehicleIncid
 	}
 }
 
-func ToVehicleIncidentsResponse(incidents []entity.VehicleIncident) []dto.VehicleIncidentResponse {
-	out := make([]dto.VehicleIncidentResponse, 0, len(incidents))
+func ToVehicleIncidentsResource(incidents []entity.VehicleIncident) []dto.VehicleIncidentResource {
+	out := make([]dto.VehicleIncidentResource, 0, len(incidents))
 	for _, item := range incidents {
-		out = append(out, ToVehicleIncidentResponse(item))
+		out = append(out, ToVehicleIncidentResource(item))
 	}
 	return out
 }

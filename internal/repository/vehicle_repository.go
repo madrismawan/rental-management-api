@@ -11,6 +11,7 @@ import (
 type VehicleRepository interface {
 	Create(ctx context.Context, data *entity.Vehicle) error
 	GetByID(ctx context.Context, id uint) (*entity.Vehicle, error)
+	GetByColumn(ctx context.Context, column string, value any) (entity.Vehicle, error)
 	List(ctx context.Context) ([]entity.Vehicle, error)
 	Update(ctx context.Context, data *entity.Vehicle) error
 	Delete(ctx context.Context, id uint) error
@@ -34,6 +35,14 @@ func (r *vehicleRepository) GetByID(ctx context.Context, id uint) (*entity.Vehic
 		return nil, err
 	}
 	return &data, nil
+}
+
+func (r *vehicleRepository) GetByColumn(ctx context.Context, column string, value any) (entity.Vehicle, error) {
+	var data entity.Vehicle
+	if err := r.db.WithContext(ctx).Where(column+" = ?", value).First(&data).Error; err != nil {
+		return entity.Vehicle{}, err
+	}
+	return data, nil
 }
 
 func (r *vehicleRepository) List(ctx context.Context) ([]entity.Vehicle, error) {

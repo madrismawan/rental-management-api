@@ -16,7 +16,7 @@ type UpdateCustomerRequest struct {
 	AvatarURL   *string `json:"avatar_url"`
 }
 
-type CustomerResponse struct {
+type CustomerResource struct {
 	ID          uint      `json:"id"`
 	UserID      uint      `json:"user_id"`
 	PhoneNumber string    `json:"phone_number"`

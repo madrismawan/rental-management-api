@@ -77,8 +77,8 @@ func ApplyRentalUpdate(rental *entity.Rental, req dto.UpdateRentalRequest) {
 	}
 }
 
-func ToRentalResponse(rental entity.Rental) dto.RentalResponse {
-	return dto.RentalResponse{
+func ToRentalResource(rental entity.Rental) dto.RentalResource {
+	return dto.RentalResource{
 		ID:                    rental.ID,
 		CustomerID:            rental.CustomerID,
 		VehicleID:             rental.VehicleID,
@@ -101,10 +101,10 @@ func ToRentalResponse(rental entity.Rental) dto.RentalResponse {
 	}
 }
 
-func ToRentalsResponse(rentals []entity.Rental) []dto.RentalResponse {
-	out := make([]dto.RentalResponse, 0, len(rentals))
+func ToRentalsResource(rentals []entity.Rental) []dto.RentalResource {
+	out := make([]dto.RentalResource, 0, len(rentals))
 	for _, item := range rentals {
-		out = append(out, ToRentalResponse(item))
+		out = append(out, ToRentalResource(item))
 	}
 	return out
 }

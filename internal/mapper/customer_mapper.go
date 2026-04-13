@@ -29,8 +29,8 @@ func ApplyCustomerUpdate(customer *entity.Customer, req dto.UpdateCustomerReques
 	}
 }
 
-func ToCustomerResponse(customer entity.Customer) dto.CustomerResponse {
-	return dto.CustomerResponse{
+func ToCustomerResource(customer entity.Customer) dto.CustomerResource {
+	return dto.CustomerResource{
 		ID:          customer.ID,
 		UserID:      customer.UserID,
 		PhoneNumber: customer.PhoneNumber,
@@ -41,10 +41,10 @@ func ToCustomerResponse(customer entity.Customer) dto.CustomerResponse {
 	}
 }
 
-func ToCustomersResponse(customers []entity.Customer) []dto.CustomerResponse {
-	out := make([]dto.CustomerResponse, 0, len(customers))
+func ToCustomersResource(customers []entity.Customer) []dto.CustomerResource {
+	out := make([]dto.CustomerResource, 0, len(customers))
 	for _, item := range customers {
-		out = append(out, ToCustomerResponse(item))
+		out = append(out, ToCustomerResource(item))
 	}
 	return out
 }

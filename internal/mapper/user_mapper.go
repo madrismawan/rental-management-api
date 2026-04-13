@@ -29,8 +29,8 @@ func ApplyUserUpdate(user *entity.User, req dto.UpdateUserRequest) {
 	}
 }
 
-func ToUserResponse(user entity.User) dto.UserResponse {
-	return dto.UserResponse{
+func ToUserResource(user entity.User) dto.UserResource {
+	return dto.UserResource{
 		ID:        user.ID,
 		Name:      user.Name,
 		Email:     user.Email,
@@ -40,10 +40,10 @@ func ToUserResponse(user entity.User) dto.UserResponse {
 	}
 }
 
-func ToUsersResponse(users []entity.User) []dto.UserResponse {
-	out := make([]dto.UserResponse, 0, len(users))
+func ToUsersResource(users []entity.User) []dto.UserResource {
+	out := make([]dto.UserResource, 0, len(users))
 	for _, item := range users {
-		out = append(out, ToUserResponse(item))
+		out = append(out, ToUserResource(item))
 	}
 	return out
 }

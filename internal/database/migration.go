@@ -1,16 +1,17 @@
 package database
 
 import (
-	"fmt"
+	"rental-management-api/internal/entity"
 
 	"gorm.io/gorm"
-
-	"rental-management-api/internal/entity"
 )
 
-func Migrate(db *gorm.DB) error {
-	if err := db.AutoMigrate(entity.Models()...); err != nil {
-		return fmt.Errorf("auto migrate: %w", err)
-	}
-	return nil
+func AutoMigrate(db *gorm.DB) error {
+	return db.AutoMigrate(
+		&entity.User{},
+		&entity.Customer{},
+		&entity.Vehicle{},
+		&entity.Rental{},
+		&entity.VehicleIncident{},
+	)
 }

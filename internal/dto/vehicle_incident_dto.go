@@ -28,7 +28,7 @@ type UpdateVehicleIncidentRequest struct {
 	Status       *constant.VehicleIncidentStatus `json:"status"`
 }
 
-type VehicleIncidentResponse struct {
+type VehicleIncidentResource struct {
 	ID           uint                           `json:"id"`
 	VehicleID    uint                           `json:"vehicle_id"`
 	CustomerID   uint                           `json:"customer_id"`

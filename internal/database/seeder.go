@@ -3,21 +3,22 @@ package database
 import (
 	"errors"
 	"fmt"
+	"os"
 
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 
-	"rental-management-api/config"
 	"rental-management-api/internal/constant"
 	"rental-management-api/internal/entity"
 )
 
 const (
 	seedAdminName  = "Administrator"
-	seedAdminEmail = "admin@rental.local"
+	seedAdminEmail = "admin@gmail.com"
+	defaultSeedAdminPassword = "admin123"
 )
 
-func SeedAdminUser(db *gorm.DB, cfg config.Config) error {
+func SeedAdminUser(db *gorm.DB) error {
 	var user entity.User
 	err := db.Where("email = ?", seedAdminEmail).First(&user).Error
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
@@ -25,7 +26,12 @@ func SeedAdminUser(db *gorm.DB, cfg config.Config) error {
 	}
 
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		hashedPassword, hashErr := bcrypt.GenerateFromPassword([]byte(cfg.AdminPassword), bcrypt.DefaultCost)
+		adminPassword := os.Getenv("ADMIN_PASSWORD")
+		if adminPassword == "" {
+			adminPassword = defaultSeedAdminPassword
+		}
+
+		hashedPassword, hashErr := bcrypt.GenerateFromPassword([]byte(adminPassword), bcrypt.DefaultCost)
 		if hashErr != nil {
 			return fmt.Errorf("hash admin password: %w", hashErr)
 		}

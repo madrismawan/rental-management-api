@@ -6,7 +6,6 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"rental-management-api/internal/dto"
-	"rental-management-api/internal/entity"
 	"rental-management-api/internal/mapper"
 	"rental-management-api/internal/service"
 )
@@ -31,15 +30,20 @@ func (h *CustomerHandler) Register(rg *gin.RouterGroup) {
 func (h *CustomerHandler) Create(ctx *gin.Context) {
 	var req dto.CreateCustomerRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, response{Message: err.Error()})
+		ctx.JSON(http.StatusBadRequest, resource{Message: err.Error()})
 		return
 	}
-	created, err := h.svc.Create(ctx, mapper.ToCustomerEntity(req))
+	created, err := h.svc.Create(ctx, service.CreateCustomerInput{
+		UserID:      req.UserID,
+		PhoneNumber: req.PhoneNumber,
+		Address:     req.Address,
+		AvatarURL:   req.AvatarURL,
+	})
 	if err != nil {
 		writeError(ctx, err)
 		return
 	}
-	ctx.JSON(http.StatusCreated, response{Message: "customer created", Data: mapper.ToCustomerResponse(*created)})
+	ctx.JSON(http.StatusCreated, resource{Message: "customer created", Data: mapper.ToCustomerResource(*created)})
 }
 
 func (h *CustomerHandler) List(ctx *gin.Context) {
@@ -48,13 +52,13 @@ func (h *CustomerHandler) List(ctx *gin.Context) {
 		writeError(ctx, err)
 		return
 	}
-	ctx.JSON(http.StatusOK, response{Message: "ok", Data: mapper.ToCustomersResponse(items)})
+	ctx.JSON(http.StatusOK, resource{Message: "ok", Data: mapper.ToCustomersResource(items)})
 }
 
 func (h *CustomerHandler) GetByID(ctx *gin.Context) {
 	id, err := parseID(ctx)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, response{Message: "invalid id"})
+		ctx.JSON(http.StatusBadRequest, resource{Message: "invalid id"})
 		return
 	}
 	item, err := h.svc.GetByID(ctx, id)
@@ -62,39 +66,42 @@ func (h *CustomerHandler) GetByID(ctx *gin.Context) {
 		writeError(ctx, err)
 		return
 	}
-	ctx.JSON(http.StatusOK, response{Message: "ok", Data: mapper.ToCustomerResponse(*item)})
+	ctx.JSON(http.StatusOK, resource{Message: "ok", Data: mapper.ToCustomerResource(*item)})
 }
 
 func (h *CustomerHandler) Update(ctx *gin.Context) {
 	id, err := parseID(ctx)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, response{Message: "invalid id"})
+		ctx.JSON(http.StatusBadRequest, resource{Message: "invalid id"})
 		return
 	}
 	var req dto.UpdateCustomerRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, response{Message: err.Error()})
+		ctx.JSON(http.StatusBadRequest, resource{Message: err.Error()})
 		return
 	}
-	item, err := h.svc.Update(ctx, id, func(model *entity.Customer) {
-		mapper.ApplyCustomerUpdate(model, req)
+	item, err := h.svc.Update(ctx, id, service.UpdateCustomerInput{
+		UserID:      req.UserID,
+		PhoneNumber: req.PhoneNumber,
+		Address:     req.Address,
+		AvatarURL:   req.AvatarURL,
 	})
 	if err != nil {
 		writeError(ctx, err)
 		return
 	}
-	ctx.JSON(http.StatusOK, response{Message: "customer updated", Data: mapper.ToCustomerResponse(*item)})
+	ctx.JSON(http.StatusOK, resource{Message: "customer updated", Data: mapper.ToCustomerResource(*item)})
 }
 
 func (h *CustomerHandler) Delete(ctx *gin.Context) {
 	id, err := parseID(ctx)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, response{Message: "invalid id"})
+		ctx.JSON(http.StatusBadRequest, resource{Message: "invalid id"})
 		return
 	}
 	if err := h.svc.Delete(ctx, id); err != nil {
 		writeError(ctx, err)
 		return
 	}
-	ctx.JSON(http.StatusOK, response{Message: "customer deleted"})
+	ctx.JSON(http.StatusOK, resource{Message: "customer deleted"})
 }

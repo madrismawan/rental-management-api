@@ -6,7 +6,6 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"rental-management-api/internal/dto"
-	"rental-management-api/internal/entity"
 	"rental-management-api/internal/mapper"
 	"rental-management-api/internal/service"
 )
@@ -31,15 +30,26 @@ func (h *VehicleHandler) Register(rg *gin.RouterGroup) {
 func (h *VehicleHandler) Create(ctx *gin.Context) {
 	var req dto.CreateVehicleRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, response{Message: err.Error()})
+		ctx.JSON(http.StatusBadRequest, resource{Message: err.Error()})
 		return
 	}
-	created, err := h.svc.Create(ctx, mapper.ToVehicleEntity(req))
+	created, err := h.svc.Create(ctx, service.CreateVehicleInput{
+		PlateNumber: req.PlateNumber,
+		Color:       req.Color,
+		Brand:       req.Brand,
+		Model:       req.Model,
+		CC:          req.CC,
+		Year:        req.Year,
+		Mileage:     req.Mileage,
+		DailyRate:   req.DailyRate,
+		Status:      req.Status,
+		Notes:       req.Notes,
+	})
 	if err != nil {
 		writeError(ctx, err)
 		return
 	}
-	ctx.JSON(http.StatusCreated, response{Message: "vehicle created", Data: mapper.ToVehicleResponse(*created)})
+	ctx.JSON(http.StatusCreated, resource{Message: "vehicle created", Data: mapper.ToVehicleResource(*created)})
 }
 
 func (h *VehicleHandler) List(ctx *gin.Context) {
@@ -48,13 +58,13 @@ func (h *VehicleHandler) List(ctx *gin.Context) {
 		writeError(ctx, err)
 		return
 	}
-	ctx.JSON(http.StatusOK, response{Message: "ok", Data: mapper.ToVehiclesResponse(items)})
+	ctx.JSON(http.StatusOK, resource{Message: "ok", Data: mapper.ToVehiclesResource(items)})
 }
 
 func (h *VehicleHandler) GetByID(ctx *gin.Context) {
 	id, err := parseID(ctx)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, response{Message: "invalid id"})
+		ctx.JSON(http.StatusBadRequest, resource{Message: "invalid id"})
 		return
 	}
 	item, err := h.svc.GetByID(ctx, id)
@@ -62,39 +72,48 @@ func (h *VehicleHandler) GetByID(ctx *gin.Context) {
 		writeError(ctx, err)
 		return
 	}
-	ctx.JSON(http.StatusOK, response{Message: "ok", Data: mapper.ToVehicleResponse(*item)})
+	ctx.JSON(http.StatusOK, resource{Message: "ok", Data: mapper.ToVehicleResource(*item)})
 }
 
 func (h *VehicleHandler) Update(ctx *gin.Context) {
 	id, err := parseID(ctx)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, response{Message: "invalid id"})
+		ctx.JSON(http.StatusBadRequest, resource{Message: "invalid id"})
 		return
 	}
 	var req dto.UpdateVehicleRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, response{Message: err.Error()})
+		ctx.JSON(http.StatusBadRequest, resource{Message: err.Error()})
 		return
 	}
-	item, err := h.svc.Update(ctx, id, func(model *entity.Vehicle) {
-		mapper.ApplyVehicleUpdate(model, req)
+	item, err := h.svc.Update(ctx, id, service.UpdateVehicleInput{
+		PlateNumber: req.PlateNumber,
+		Color:       req.Color,
+		Brand:       req.Brand,
+		Model:       req.Model,
+		CC:          req.CC,
+		Year:        req.Year,
+		Mileage:     req.Mileage,
+		DailyRate:   req.DailyRate,
+		Status:      req.Status,
+		Notes:       req.Notes,
 	})
 	if err != nil {
 		writeError(ctx, err)
 		return
 	}
-	ctx.JSON(http.StatusOK, response{Message: "vehicle updated", Data: mapper.ToVehicleResponse(*item)})
+	ctx.JSON(http.StatusOK, resource{Message: "vehicle updated", Data: mapper.ToVehicleResource(*item)})
 }
 
 func (h *VehicleHandler) Delete(ctx *gin.Context) {
 	id, err := parseID(ctx)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, response{Message: "invalid id"})
+		ctx.JSON(http.StatusBadRequest, resource{Message: "invalid id"})
 		return
 	}
 	if err := h.svc.Delete(ctx, id); err != nil {
 		writeError(ctx, err)
 		return
 	}
-	ctx.JSON(http.StatusOK, response{Message: "vehicle deleted"})
+	ctx.JSON(http.StatusOK, resource{Message: "vehicle deleted"})
 }

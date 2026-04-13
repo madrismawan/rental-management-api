@@ -3,46 +3,33 @@ package main
 import (
 	"log"
 
-	"github.com/gin-gonic/gin"
-
 	"rental-management-api/config"
 	"rental-management-api/internal/database"
-	"rental-management-api/internal/handler"
-	"rental-management-api/internal/repository"
-	"rental-management-api/internal/service"
+	"rental-management-api/internal/server"
 )
 
 func main() {
-	cfg := config.Load()
+	cfg, err := config.Load()
+	if err != nil {
+		log.Fatalf("config load failed: %v", err)
+	}
 
-	db, err := database.Connect(cfg)
+	db, err := database.New(cfg.Database.URL, cfg.Environment)
 	if err != nil {
 		log.Fatalf("database init failed: %v", err)
 	}
 
-	r := gin.Default()
+	if err := database.AutoMigrate(db); err != nil {
+		log.Fatalf("database migration failed: %v", err)
+	}
 
-	api := r.Group("/api/v1")
+	if err := database.SeedAdminUser(db); err != nil {
+		log.Fatalf("database seed failed: %v", err)
+	}
 
-	userRepo := repository.NewUserRepository(db)
-	customerRepo := repository.NewCustomerRepository(db)
-	vehicleRepo := repository.NewVehicleRepository(db)
-	rentalRepo := repository.NewRentalRepository(db)
-	incidentRepo := repository.NewVehicleIncidentRepository(db)
+	r := server.NewRouter(cfg, db)
 
-	userSvc := service.NewUserService(userRepo)
-	customerSvc := service.NewCustomerService(customerRepo)
-	vehicleSvc := service.NewVehicleService(vehicleRepo)
-	rentalSvc := service.NewRentalService(rentalRepo)
-	incidentSvc := service.NewVehicleIncidentService(incidentRepo)
-
-	handler.NewUserHandler(userSvc).Register(api)
-	handler.NewCustomerHandler(customerSvc).Register(api)
-	handler.NewVehicleHandler(vehicleSvc).Register(api)
-	handler.NewRentalHandler(rentalSvc).Register(api)
-	handler.NewVehicleIncidentHandler(incidentSvc).Register(api)
-
-	if err := r.Run(":" + cfg.Port); err != nil {
+	if err := r.Run(cfg.HTTP.Address()); err != nil {
 		log.Fatalf("server run failed: %v", err)
 	}
 }

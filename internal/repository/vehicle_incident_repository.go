@@ -11,6 +11,7 @@ import (
 type VehicleIncidentRepository interface {
 	Create(ctx context.Context, data *entity.VehicleIncident) error
 	GetByID(ctx context.Context, id uint) (*entity.VehicleIncident, error)
+	GetByColumn(ctx context.Context, column string, value any) (entity.VehicleIncident, error)
 	List(ctx context.Context) ([]entity.VehicleIncident, error)
 	Update(ctx context.Context, data *entity.VehicleIncident) error
 	Delete(ctx context.Context, id uint) error
@@ -39,6 +40,20 @@ func (r *vehicleIncidentRepository) GetByID(ctx context.Context, id uint) (*enti
 		return nil, err
 	}
 	return &data, nil
+}
+
+func (r *vehicleIncidentRepository) GetByColumn(ctx context.Context, column string, value any) (entity.VehicleIncident, error) {
+	var data entity.VehicleIncident
+	err := r.db.WithContext(ctx).
+		Preload("Vehicle").
+		Preload("Customer").
+		Preload("Rental").
+		Where(column+" = ?", value).
+		First(&data).Error
+	if err != nil {
+		return entity.VehicleIncident{}, err
+	}
+	return data, nil
 }
 
 func (r *vehicleIncidentRepository) List(ctx context.Context) ([]entity.VehicleIncident, error) {

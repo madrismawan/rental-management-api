@@ -9,7 +9,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type response struct {
+type resource struct {
 	Message string `json:"message"`
 	Data    any    `json:"data,omitempty"`
 }
@@ -25,8 +25,8 @@ func parseID(ctx *gin.Context) (uint, error) {
 
 func writeError(ctx *gin.Context, err error) {
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		ctx.JSON(http.StatusNotFound, response{Message: "resource not found"})
+		ctx.JSON(http.StatusNotFound, resource{Message: "resource not found"})
 		return
 	}
-	ctx.JSON(http.StatusInternalServerError, response{Message: err.Error()})
+	ctx.JSON(http.StatusInternalServerError, resource{Message: err.Error()})
 }

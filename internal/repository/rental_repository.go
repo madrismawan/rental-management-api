@@ -11,6 +11,7 @@ import (
 type RentalRepository interface {
 	Create(ctx context.Context, data *entity.Rental) error
 	GetByID(ctx context.Context, id uint) (*entity.Rental, error)
+	GetByColumn(ctx context.Context, column string, value any) (entity.Rental, error)
 	List(ctx context.Context) ([]entity.Rental, error)
 	Update(ctx context.Context, data *entity.Rental) error
 	Delete(ctx context.Context, id uint) error
@@ -39,6 +40,20 @@ func (r *rentalRepository) GetByID(ctx context.Context, id uint) (*entity.Rental
 		return nil, err
 	}
 	return &data, nil
+}
+
+func (r *rentalRepository) GetByColumn(ctx context.Context, column string, value any) (entity.Rental, error) {
+	var data entity.Rental
+	err := r.db.WithContext(ctx).
+		Preload("Customer").
+		Preload("Vehicle").
+		Preload("VehicleIncidents").
+		Where(column+" = ?", value).
+		First(&data).Error
+	if err != nil {
+		return entity.Rental{}, err
+	}
+	return data, nil
 }
 
 func (r *rentalRepository) List(ctx context.Context) ([]entity.Rental, error) {

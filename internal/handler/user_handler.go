@@ -6,7 +6,6 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"rental-management-api/internal/dto"
-	"rental-management-api/internal/entity"
 	"rental-management-api/internal/mapper"
 	"rental-management-api/internal/service"
 )
@@ -31,15 +30,20 @@ func (h *UserHandler) Register(rg *gin.RouterGroup) {
 func (h *UserHandler) Create(ctx *gin.Context) {
 	var req dto.CreateUserRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, response{Message: err.Error()})
+		ctx.JSON(http.StatusBadRequest, resource{Message: err.Error()})
 		return
 	}
-	created, err := h.svc.Create(ctx, mapper.ToUserEntity(req))
+	created, err := h.svc.Create(ctx, service.CreateUserInput{
+		Name:     req.Name,
+		Email:    req.Email,
+		Role:     req.Role,
+		Password: req.Password,
+	})
 	if err != nil {
 		writeError(ctx, err)
 		return
 	}
-	ctx.JSON(http.StatusCreated, response{Message: "user created", Data: mapper.ToUserResponse(*created)})
+	ctx.JSON(http.StatusCreated, resource{Message: "user created", Data: mapper.ToUserResource(*created)})
 }
 
 func (h *UserHandler) List(ctx *gin.Context) {
@@ -48,13 +52,13 @@ func (h *UserHandler) List(ctx *gin.Context) {
 		writeError(ctx, err)
 		return
 	}
-	ctx.JSON(http.StatusOK, response{Message: "ok", Data: mapper.ToUsersResponse(items)})
+	ctx.JSON(http.StatusOK, resource{Message: "ok", Data: mapper.ToUsersResource(items)})
 }
 
 func (h *UserHandler) GetByID(ctx *gin.Context) {
 	id, err := parseID(ctx)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, response{Message: "invalid id"})
+		ctx.JSON(http.StatusBadRequest, resource{Message: "invalid id"})
 		return
 	}
 	item, err := h.svc.GetByID(ctx, id)
@@ -62,39 +66,42 @@ func (h *UserHandler) GetByID(ctx *gin.Context) {
 		writeError(ctx, err)
 		return
 	}
-	ctx.JSON(http.StatusOK, response{Message: "ok", Data: mapper.ToUserResponse(*item)})
+	ctx.JSON(http.StatusOK, resource{Message: "ok", Data: mapper.ToUserResource(*item)})
 }
 
 func (h *UserHandler) Update(ctx *gin.Context) {
 	id, err := parseID(ctx)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, response{Message: "invalid id"})
+		ctx.JSON(http.StatusBadRequest, resource{Message: "invalid id"})
 		return
 	}
 	var req dto.UpdateUserRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, response{Message: err.Error()})
+		ctx.JSON(http.StatusBadRequest, resource{Message: err.Error()})
 		return
 	}
-	item, err := h.svc.Update(ctx, id, func(model *entity.User) {
-		mapper.ApplyUserUpdate(model, req)
+	item, err := h.svc.Update(ctx, id, service.UpdateUserInput{
+		Name:     req.Name,
+		Email:    req.Email,
+		Role:     req.Role,
+		Password: req.Password,
 	})
 	if err != nil {
 		writeError(ctx, err)
 		return
 	}
-	ctx.JSON(http.StatusOK, response{Message: "user updated", Data: mapper.ToUserResponse(*item)})
+	ctx.JSON(http.StatusOK, resource{Message: "user updated", Data: mapper.ToUserResource(*item)})
 }
 
 func (h *UserHandler) Delete(ctx *gin.Context) {
 	id, err := parseID(ctx)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, response{Message: "invalid id"})
+		ctx.JSON(http.StatusBadRequest, resource{Message: "invalid id"})
 		return
 	}
 	if err := h.svc.Delete(ctx, id); err != nil {
 		writeError(ctx, err)
 		return
 	}
-	ctx.JSON(http.StatusOK, response{Message: "user deleted"})
+	ctx.JSON(http.StatusOK, resource{Message: "user deleted"})
 }

@@ -11,6 +11,7 @@ import (
 type CustomerRepository interface {
 	Create(ctx context.Context, data *entity.Customer) error
 	GetByID(ctx context.Context, id uint) (*entity.Customer, error)
+	GetByColumn(ctx context.Context, column string, value any) (entity.Customer, error)
 	List(ctx context.Context) ([]entity.Customer, error)
 	Update(ctx context.Context, data *entity.Customer) error
 	Delete(ctx context.Context, id uint) error
@@ -34,6 +35,14 @@ func (r *customerRepository) GetByID(ctx context.Context, id uint) (*entity.Cust
 		return nil, err
 	}
 	return &data, nil
+}
+
+func (r *customerRepository) GetByColumn(ctx context.Context, column string, value any) (entity.Customer, error) {
+	var data entity.Customer
+	if err := r.db.WithContext(ctx).Preload("User").Where(column+" = ?", value).First(&data).Error; err != nil {
+		return entity.Customer{}, err
+	}
+	return data, nil
 }
 
 func (r *customerRepository) List(ctx context.Context) ([]entity.Customer, error) {

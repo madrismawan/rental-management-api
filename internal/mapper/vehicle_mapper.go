@@ -53,8 +53,8 @@ func ApplyVehicleUpdate(vehicle *entity.Vehicle, req dto.UpdateVehicleRequest) {
 	}
 }
 
-func ToVehicleResponse(vehicle entity.Vehicle) dto.VehicleResponse {
-	return dto.VehicleResponse{
+func ToVehicleResource(vehicle entity.Vehicle) dto.VehicleResource {
+	return dto.VehicleResource{
 		ID:          vehicle.ID,
 		PlateNumber: vehicle.PlateNumber,
 		Color:       vehicle.Color,
@@ -71,10 +71,10 @@ func ToVehicleResponse(vehicle entity.Vehicle) dto.VehicleResponse {
 	}
 }
 
-func ToVehiclesResponse(vehicles []entity.Vehicle) []dto.VehicleResponse {
-	out := make([]dto.VehicleResponse, 0, len(vehicles))
+func ToVehiclesResource(vehicles []entity.Vehicle) []dto.VehicleResource {
+	out := make([]dto.VehicleResource, 0, len(vehicles))
 	for _, item := range vehicles {
-		out = append(out, ToVehicleResponse(item))
+		out = append(out, ToVehicleResource(item))
 	}
 	return out
 }
