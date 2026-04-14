@@ -1,14 +1,17 @@
 package dto
 
-import "time"
+import (
+	"mime/multipart"
+	"time"
+)
 
 type CreateCustomerRequest struct {
-	Name        string `json:"name" binding:"required"`
-	Email       string `json:"email" binding:"required"`
-	Password    string `json:"password" binding:"required"`
-	PhoneNumber string `json:"phone_number" binding:"required"`
-	Address     string `json:"address"`
-	AvatarURL   string `json:"avatar_url"`
+	Name        string                `json:"name" form:"name" binding:"required"`
+	Email       string                `json:"email" form:"email" binding:"required"`
+	Password    string                `json:"password" form:"password" binding:"required"`
+	PhoneNumber string                `json:"phone_number" form:"phone_number" binding:"required"`
+	Address     string                `json:"address" form:"address"`
+	Avatar      *multipart.FileHeader `form:"avatar"`
 }
 
 type UpdateCustomerRequest struct {

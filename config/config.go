@@ -31,6 +31,7 @@ type Config struct {
 	Shutdown    ShutdownConfig
 	Database    DatabaseConfig
 	Auth        AuthConfig
+	Storage     StorageConfig
 }
 
 type LoggerConfig struct {
@@ -56,6 +57,14 @@ type AuthConfig struct {
 	AccessTokenSecret  string
 	RefreshTokenSecret string
 	TokenTTL           time.Duration
+}
+
+type StorageConfig struct {
+	Endpoint  string
+	AccessKey string
+	SecretKey string
+	Bucket    string
+	Region    string
 }
 
 func MustLoad() Config {
@@ -91,6 +100,13 @@ func Load() (Config, error) {
 			AccessTokenSecret:  getString("AUTH_ACCESS_TOKEN_SECRET", defaultAuthSecret),
 			RefreshTokenSecret: getString("AUTH_REFRESH_TOKEN_SECRET", defaultAuthSecret),
 			TokenTTL:           getDuration("AUTH_TOKEN_TTL", defaultTokenTTL),
+		},
+		Storage: StorageConfig{
+			Endpoint:  getString("IDCLOUD_S3_ENDPOINT", ""),
+			AccessKey: getString("IDCLOUD_ACCESS_KEY", ""),
+			SecretKey: getString("IDCLOUD_SECRET_KEY", ""),
+			Bucket:    getString("IDCLOUD_BUCKET", ""),
+			Region:    getString("IDCLOUD_REGION", ""),
 		},
 	}
 

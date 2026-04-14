@@ -5,8 +5,12 @@ import (
 	"rental-management-api/internal/entity"
 )
 
-func ToCustomerResource(customer entity.Customer) dto.CustomerResource {
-	return dto.CustomerResource{
+type AvatarURLResolver interface {
+	ResolveURL(objectRef string) (string, error)
+}
+
+func ToCustomerResource(customer entity.Customer, resolver AvatarURLResolver) dto.CustomerResource {
+	res := dto.CustomerResource{
 		ID:          customer.ID,
 		UserID:      customer.UserID,
 		Name:        customer.User.Name,
@@ -18,12 +22,21 @@ func ToCustomerResource(customer entity.Customer) dto.CustomerResource {
 		CreatedAt:   customer.CreatedAt,
 		UpdatedAt:   customer.UpdatedAt,
 	}
+
+	if resolver != nil && res.AvatarURL != "" {
+		resolvedURL, err := resolver.ResolveURL(res.AvatarURL)
+		if err == nil {
+			res.AvatarURL = resolvedURL
+		}
+	}
+
+	return res
 }
 
-func ToCustomersResource(customers []entity.Customer) []dto.CustomerResource {
+func ToCustomersResource(customers []entity.Customer, resolver AvatarURLResolver) []dto.CustomerResource {
 	out := make([]dto.CustomerResource, 0, len(customers))
 	for _, item := range customers {
-		out = append(out, ToCustomerResource(item))
+		out = append(out, ToCustomerResource(item, resolver))
 	}
 	return out
 }
