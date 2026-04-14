@@ -14,6 +14,7 @@ type VehicleIncidentRepository interface {
 	GetByID(ctx context.Context, id uint) (*entity.VehicleIncident, error)
 	GetByColumn(ctx context.Context, column string, value any) (entity.VehicleIncident, error)
 	List(ctx context.Context) ([]entity.VehicleIncident, error)
+	ListPaginated(ctx context.Context, page int, limit int) ([]entity.VehicleIncident, int64, error)
 	Update(ctx context.Context, data *entity.VehicleIncident) error
 	Delete(ctx context.Context, id uint) error
 }
@@ -65,6 +66,31 @@ func (r *vehicleIncidentRepository) List(ctx context.Context) ([]entity.VehicleI
 		Preload("Rental").
 		Find(&data).Error
 	return data, err
+}
+
+func (r *vehicleIncidentRepository) ListPaginated(ctx context.Context, page int, limit int) ([]entity.VehicleIncident, int64, error) {
+	var data []entity.VehicleIncident
+	var total int64
+
+	db := database.ExtractDB(ctx, r.db).Model(&entity.VehicleIncident{})
+	if err := db.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	offset := (page - 1) * limit
+	err := database.ExtractDB(ctx, r.db).
+		Preload("Vehicle").
+		Preload("Customer").
+		Preload("Rental").
+		Order("id DESC").
+		Offset(offset).
+		Limit(limit).
+		Find(&data).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return data, total, nil
 }
 
 func (r *vehicleIncidentRepository) Update(ctx context.Context, data *entity.VehicleIncident) error {

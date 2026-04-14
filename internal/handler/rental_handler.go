@@ -59,12 +59,18 @@ func (h *RentalHandler) Create(ctx *gin.Context) {
 }
 
 func (h *RentalHandler) List(ctx *gin.Context) {
-	items, err := h.svc.List(ctx)
+	page, limit, err := parsePaginationQuery(ctx, 10)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, resource{Message: err.Error()})
+		return
+	}
+
+	result, err := h.svc.ListPaginated(ctx, page, limit)
 	if err != nil {
 		writeError(ctx, err)
 		return
 	}
-	ctx.JSON(http.StatusOK, resource{Message: "ok", Data: mapper.ToRentalsResource(items)})
+	ctx.JSON(http.StatusOK, resource{Message: "ok", Data: mapper.ToRentalsResource(result.Items), Meta: paginationMeta(result.Page, result.Limit, result.Total, result.TotalPages)})
 }
 
 func (h *RentalHandler) GetByID(ctx *gin.Context) {

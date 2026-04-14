@@ -14,6 +14,7 @@ type RentalRepository interface {
 	GetByID(ctx context.Context, id uint) (*entity.Rental, error)
 	GetByColumn(ctx context.Context, column string, value any) (entity.Rental, error)
 	List(ctx context.Context) ([]entity.Rental, error)
+	ListPaginated(ctx context.Context, page int, limit int) ([]entity.Rental, int64, error)
 	Update(ctx context.Context, data *entity.Rental) error
 	Delete(ctx context.Context, id uint) error
 }
@@ -65,6 +66,31 @@ func (r *rentalRepository) List(ctx context.Context) ([]entity.Rental, error) {
 		Preload("VehicleIncidents").
 		Find(&data).Error
 	return data, err
+}
+
+func (r *rentalRepository) ListPaginated(ctx context.Context, page int, limit int) ([]entity.Rental, int64, error) {
+	var data []entity.Rental
+	var total int64
+
+	db := database.ExtractDB(ctx, r.db).Model(&entity.Rental{})
+	if err := db.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	offset := (page - 1) * limit
+	err := database.ExtractDB(ctx, r.db).
+		Preload("Customer").
+		Preload("Vehicle").
+		Preload("VehicleIncidents").
+		Order("id DESC").
+		Offset(offset).
+		Limit(limit).
+		Find(&data).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return data, total, nil
 }
 
 func (r *rentalRepository) Update(ctx context.Context, data *entity.Rental) error {

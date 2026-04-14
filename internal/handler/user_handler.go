@@ -47,12 +47,18 @@ func (h *UserHandler) Create(ctx *gin.Context) {
 }
 
 func (h *UserHandler) List(ctx *gin.Context) {
-	items, err := h.svc.List(ctx)
+	page, limit, err := parsePaginationQuery(ctx, 10)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, resource{Message: err.Error()})
+		return
+	}
+
+	result, err := h.svc.ListPaginated(ctx, page, limit)
 	if err != nil {
 		writeError(ctx, err)
 		return
 	}
-	ctx.JSON(http.StatusOK, resource{Message: "ok", Data: mapper.ToUsersResource(items)})
+	ctx.JSON(http.StatusOK, resource{Message: "ok", Data: mapper.ToUsersResource(result.Items), Meta: paginationMeta(result.Page, result.Limit, result.Total, result.TotalPages)})
 }
 
 func (h *UserHandler) GetByID(ctx *gin.Context) {

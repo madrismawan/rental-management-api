@@ -16,6 +16,7 @@ type UserRepository interface {
 	GetByID(ctx context.Context, id uint) (*entity.User, error)
 	GetByColumn(c context.Context, column string, value any) (entity.User, error)
 	List(ctx context.Context) ([]entity.User, error)
+	ListPaginated(ctx context.Context, page int, limit int) ([]entity.User, int64, error)
 	Update(ctx context.Context, data *entity.User) error
 	Delete(ctx context.Context, id uint) error
 }
@@ -55,6 +56,28 @@ func (r *userRepository) List(ctx context.Context) ([]entity.User, error) {
 	var data []entity.User
 	err := database.ExtractDB(ctx, r.db).Find(&data).Error
 	return data, err
+}
+
+func (r *userRepository) ListPaginated(ctx context.Context, page int, limit int) ([]entity.User, int64, error) {
+	var data []entity.User
+	var total int64
+
+	db := database.ExtractDB(ctx, r.db).Model(&entity.User{})
+	if err := db.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	offset := (page - 1) * limit
+	err := database.ExtractDB(ctx, r.db).
+		Order("id DESC").
+		Offset(offset).
+		Limit(limit).
+		Find(&data).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return data, total, nil
 }
 
 func (r *userRepository) Update(ctx context.Context, data *entity.User) error {

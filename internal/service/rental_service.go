@@ -15,8 +15,17 @@ type RentalService interface {
 	GetByID(ctx context.Context, id uint) (*entity.Rental, error)
 	GetByColumn(ctx context.Context, column string, value any) (entity.Rental, error)
 	List(ctx context.Context) ([]entity.Rental, error)
+	ListPaginated(ctx context.Context, page int, limit int) (*RentalListPaginatedResult, error)
 	Update(ctx context.Context, id uint, data UpdateRentalInput) (*entity.Rental, error)
 	Delete(ctx context.Context, id uint) error
+}
+
+type RentalListPaginatedResult struct {
+	Items      []entity.Rental
+	Page       int
+	Limit      int
+	Total      int64
+	TotalPages int
 }
 
 type CreateRentalInput struct {
@@ -101,6 +110,33 @@ func (s *rentalService) GetByColumn(ctx context.Context, column string, value an
 
 func (s *rentalService) List(ctx context.Context) ([]entity.Rental, error) {
 	return s.repo.List(ctx)
+}
+
+func (s *rentalService) ListPaginated(ctx context.Context, page int, limit int) (*RentalListPaginatedResult, error) {
+	if page <= 0 {
+		page = 1
+	}
+	if limit <= 0 {
+		limit = 10
+	}
+
+	items, total, err := s.repo.ListPaginated(ctx, page, limit)
+	if err != nil {
+		return nil, err
+	}
+
+	totalPages := 0
+	if total > 0 {
+		totalPages = int((total + int64(limit) - 1) / int64(limit))
+	}
+
+	return &RentalListPaginatedResult{
+		Items:      items,
+		Page:       page,
+		Limit:      limit,
+		Total:      total,
+		TotalPages: totalPages,
+	}, nil
 }
 
 func (s *rentalService) Update(ctx context.Context, id uint, data UpdateRentalInput) (*entity.Rental, error) {

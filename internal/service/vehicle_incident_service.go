@@ -16,8 +16,17 @@ type VehicleIncidentService interface {
 	GetByID(ctx context.Context, id uint) (*entity.VehicleIncident, error)
 	GetByColumn(ctx context.Context, column string, value any) (entity.VehicleIncident, error)
 	List(ctx context.Context) ([]entity.VehicleIncident, error)
+	ListPaginated(ctx context.Context, page int, limit int) (*VehicleIncidentListPaginatedResult, error)
 	Update(ctx context.Context, id uint, data UpdateVehicleIncidentInput) (*entity.VehicleIncident, error)
 	Delete(ctx context.Context, id uint) error
+}
+
+type VehicleIncidentListPaginatedResult struct {
+	Items      []entity.VehicleIncident
+	Page       int
+	Limit      int
+	Total      int64
+	TotalPages int
 }
 
 type CreateVehicleIncidentInput struct {
@@ -78,6 +87,33 @@ func (s *vehicleIncidentService) GetByColumn(ctx context.Context, column string,
 
 func (s *vehicleIncidentService) List(ctx context.Context) ([]entity.VehicleIncident, error) {
 	return s.repo.List(ctx)
+}
+
+func (s *vehicleIncidentService) ListPaginated(ctx context.Context, page int, limit int) (*VehicleIncidentListPaginatedResult, error) {
+	if page <= 0 {
+		page = 1
+	}
+	if limit <= 0 {
+		limit = 10
+	}
+
+	items, total, err := s.repo.ListPaginated(ctx, page, limit)
+	if err != nil {
+		return nil, err
+	}
+
+	totalPages := 0
+	if total > 0 {
+		totalPages = int((total + int64(limit) - 1) / int64(limit))
+	}
+
+	return &VehicleIncidentListPaginatedResult{
+		Items:      items,
+		Page:       page,
+		Limit:      limit,
+		Total:      total,
+		TotalPages: totalPages,
+	}, nil
 }
 
 func (s *vehicleIncidentService) Update(ctx context.Context, id uint, data UpdateVehicleIncidentInput) (*entity.VehicleIncident, error) {
