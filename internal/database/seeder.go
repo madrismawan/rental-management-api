@@ -241,10 +241,10 @@ func SeedRentals(db *gorm.DB) error {
 	toCreate := seedRentalTarget - int(count)
 	rentals := make([]entity.Rental, 0, toCreate)
 
-	statuses := []entity.RentalStatus{
-		entity.RentalStatusPending,
-		entity.RentalStatusActive,
-		entity.RentalStatusCompleted,
+	statuses := []constant.RentalStatus{
+		constant.RentalStatusPending,
+		constant.RentalStatusActive,
+		constant.RentalStatusCompleted,
 	}
 
 	for i := 0; i < toCreate; i++ {
@@ -257,7 +257,7 @@ func SeedRentals(db *gorm.DB) error {
 		status := statuses[rng.Intn(len(statuses))]
 
 		var returnDate *time.Time
-		if status == entity.RentalStatusCompleted {
+		if status == constant.RentalStatusCompleted {
 			r := endDate.AddDate(0, 0, rng.Intn(3))
 			returnDate = &r
 		}

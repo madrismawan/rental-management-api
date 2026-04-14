@@ -59,6 +59,7 @@ func (r *rentalRepository) GetByColumn(ctx context.Context, column string, value
 func (r *rentalRepository) List(ctx context.Context) ([]entity.Rental, error) {
 	var data []entity.Rental
 	err := database.ExtractDB(ctx, r.db).
+		Order("rental.end_date DESC").
 		Preload("Customer.User").
 		Preload("Vehicle").
 		Find(&data).Error

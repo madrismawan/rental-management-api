@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -25,6 +24,7 @@ func (h *RentalHandler) Register(rg *gin.RouterGroup) {
 	r.GET("", h.List)
 	r.GET("/:id", h.GetByID)
 	r.PUT("/:id", h.Update)
+	r.PATCH("/:id/cancel", h.Cancel)
 	r.DELETE("/:id", h.Delete)
 }
 
@@ -62,8 +62,6 @@ func (h *RentalHandler) List(ctx *gin.Context) {
 		writeError(ctx, err)
 		return
 	}
-	fmt.Println("rismwan")
-	fmt.Println(result)
 	ctx.JSON(http.StatusOK, resource{Message: "ok", Data: mapper.ToRentalsResource(result.Items), Meta: paginationMeta(result.Page, result.Limit, result.Total, result.TotalPages)})
 }
 
@@ -115,6 +113,22 @@ func (h *RentalHandler) Update(ctx *gin.Context) {
 		return
 	}
 	ctx.JSON(http.StatusOK, resource{Message: "rental updated", Data: mapper.ToRentalResource(*item)})
+}
+
+func (h *RentalHandler) Cancel(ctx *gin.Context) {
+	id, err := parseID(ctx)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, resource{Message: "invalid id"})
+		return
+	}
+
+	item, err := h.svc.Cancel(ctx, id)
+	if err != nil {
+		writeError(ctx, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, resource{Message: "rental canceled", Data: mapper.ToRentalResource(*item)})
 }
 
 func (h *RentalHandler) Delete(ctx *gin.Context) {

@@ -20,6 +20,7 @@ type RentalService interface {
 	List(ctx context.Context) ([]entity.Rental, error)
 	ListPaginated(ctx context.Context, page int, limit int) (*RentalListPaginatedResult, error)
 	Update(ctx context.Context, id uint, data UpdateRentalInput) (*entity.Rental, error)
+	Cancel(ctx context.Context, id uint) (*entity.Rental, error)
 	Delete(ctx context.Context, id uint) error
 }
 
@@ -52,7 +53,7 @@ type UpdateRentalInput struct {
 	PenaltyFee            *int64
 	Subtotal              *int64
 	Notes                 *string
-	Status                *entity.RentalStatus
+	Status                *constant.RentalStatus
 	VehicleConditionStart *string
 	VehicleConditionEnd   *string
 	MileageStart          *int
@@ -101,7 +102,7 @@ func (s *rentalService) Create(ctx context.Context, data CreateRentalInput) (*en
 			PenaltyFee:            0,
 			Subtotal:              subtotal,
 			Notes:                 data.Notes,
-			Status:                entity.RentalStatusPending,
+			Status:                constant.RentalStatusActive,
 			VehicleConditionStart: data.VehicleConditionStart,
 			MileageStart:          data.MileageStart,
 			MileageUsed:           0,
@@ -220,6 +221,20 @@ func (s *rentalService) Update(ctx context.Context, id uint, data UpdateRentalIn
 	if err := s.repo.Update(ctx, rental); err != nil {
 		return nil, err
 	}
+	return rental, nil
+}
+
+func (s *rentalService) Cancel(ctx context.Context, id uint) (*entity.Rental, error) {
+	rental, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	rental.Status = constant.RentalStatusCancelled
+	if err := s.repo.Update(ctx, rental); err != nil {
+		return nil, err
+	}
+
 	return rental, nil
 }
 
