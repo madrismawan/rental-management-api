@@ -37,6 +37,7 @@ type CreateCustomerWithUserInput struct {
 	Password    string
 	PhoneNumber string
 	Address     string
+	Status      constant.CustomerStatus
 	AvatarURL   string
 }
 
@@ -44,6 +45,7 @@ type CreateCustomerInput struct {
 	UserID      uint
 	PhoneNumber string
 	Address     string
+	Status      constant.CustomerStatus
 	AvatarURL   string
 }
 
@@ -54,6 +56,7 @@ type UpdateCustomerInput struct {
 	Password    *string
 	PhoneNumber *string
 	Address     *string
+	Status      *constant.CustomerStatus
 	AvatarURL   *string
 }
 
@@ -88,6 +91,7 @@ func (s *customerService) CreateWithUser(ctx context.Context, data CreateCustome
 			UserID:      user.ID,
 			PhoneNumber: data.PhoneNumber,
 			Address:     data.Address,
+			Status:      data.Status,
 			AvatarURL:   data.AvatarURL,
 		})
 		if err != nil {
@@ -102,10 +106,16 @@ func (s *customerService) CreateWithUser(ctx context.Context, data CreateCustome
 }
 
 func (s *customerService) Create(ctx context.Context, data CreateCustomerInput) (*entity.Customer, error) {
+	status := data.Status
+	if status == "" {
+		status = constant.CustomerStatusActive
+	}
+
 	customer := entity.Customer{
 		UserID:      data.UserID,
 		PhoneNumber: data.PhoneNumber,
 		Address:     data.Address,
+		Status:      status,
 		AvatarURL:   data.AvatarURL,
 	}
 	if err := s.repo.Create(ctx, &customer); err != nil {
@@ -188,6 +198,9 @@ func (s *customerService) Update(ctx context.Context, id uint, data UpdateCustom
 		}
 		if data.Address != nil {
 			customer.Address = *data.Address
+		}
+		if data.Status != nil {
+			customer.Status = *data.Status
 		}
 		if data.AvatarURL != nil {
 			customer.AvatarURL = *data.AvatarURL

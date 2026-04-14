@@ -52,6 +52,7 @@ func (h *CustomerHandler) Create(ctx *gin.Context) {
 		Password:    req.Password,
 		PhoneNumber: req.PhoneNumber,
 		Address:     req.Address,
+		Status:      req.Status,
 		AvatarURL:   avatarURL,
 	})
 	if err != nil {
@@ -129,6 +130,7 @@ func (h *CustomerHandler) Update(ctx *gin.Context) {
 		Password:    req.Password,
 		PhoneNumber: req.PhoneNumber,
 		Address:     req.Address,
+		Status:      req.Status,
 		AvatarURL:   avatarURL,
 	})
 	if err != nil {

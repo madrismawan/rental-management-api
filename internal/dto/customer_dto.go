@@ -3,6 +3,8 @@ package dto
 import (
 	"mime/multipart"
 	"time"
+
+	"rental-management-api/internal/constant"
 )
 
 type CreateCustomerRequest struct {
@@ -11,6 +13,7 @@ type CreateCustomerRequest struct {
 	Password    string                `json:"password" form:"password" binding:"required"`
 	PhoneNumber string                `json:"phone_number" form:"phone_number" binding:"required"`
 	Address     string                `json:"address" form:"address"`
+	Status      constant.CustomerStatus `json:"status" form:"status" binding:"required"`
 	Avatar      *multipart.FileHeader `form:"avatar"`
 }
 
@@ -20,6 +23,7 @@ type UpdateCustomerRequest struct {
 	Password    *string               `json:"password" form:"password"`
 	PhoneNumber *string               `json:"phone_number" form:"phone_number"`
 	Address     *string               `json:"address" form:"address"`
+	Status      *constant.CustomerStatus `json:"status" form:"status"`
 	AvatarURL   *string               `json:"avatar_url" form:"avatar_url"`
 	Avatar      *multipart.FileHeader `form:"avatar"`
 }
@@ -33,6 +37,7 @@ type CustomerResource struct {
 	PhoneNumber string    `json:"phone_number"`
 	Address     string    `json:"address"`
 	AvatarURL   string    `json:"avatar_url"`
+	Status      constant.CustomerStatus `json:"status"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
 }

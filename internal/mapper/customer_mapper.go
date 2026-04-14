@@ -19,6 +19,7 @@ func ToCustomerResource(customer entity.Customer, resolver AvatarURLResolver) dt
 		PhoneNumber: customer.PhoneNumber,
 		Address:     customer.Address,
 		AvatarURL:   customer.AvatarURL,
+		Status:      customer.Status,
 		CreatedAt:   customer.CreatedAt,
 		UpdatedAt:   customer.UpdatedAt,
 	}

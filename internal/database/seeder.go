@@ -89,10 +89,15 @@ func SeedCustomers(db *gorm.DB) error {
 				UserID:      user.ID,
 				PhoneNumber: phone,
 				Address:     "Seed Address",
+				Status:      constant.CustomerStatusActive,
 				AvatarURL:   "",
 			}
 			if createErr := db.Create(&newCustomer).Error; createErr != nil {
 				return fmt.Errorf("create customer profile %s: %w", email, createErr)
+			}
+		} else if customer.Status == "" {
+			if updateErr := db.Model(&customer).Update("status", constant.CustomerStatusActive).Error; updateErr != nil {
+				return fmt.Errorf("set customer status %s: %w", email, updateErr)
 			}
 		}
 	}
