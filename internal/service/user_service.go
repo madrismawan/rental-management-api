@@ -6,6 +6,8 @@ import (
 	"rental-management-api/internal/constant"
 	"rental-management-api/internal/entity"
 	"rental-management-api/internal/repository"
+
+	"gorm.io/gorm"
 )
 
 type UserService interface {
@@ -32,11 +34,12 @@ type UpdateUserInput struct {
 }
 
 type userService struct {
+	db   *gorm.DB
 	repo repository.UserRepository
 }
 
-func NewUserService(repo repository.UserRepository) UserService {
-	return &userService{repo: repo}
+func NewUserService(db *gorm.DB, repo repository.UserRepository) UserService {
+	return &userService{db: db, repo: repo}
 }
 
 func (s *userService) Create(ctx context.Context, data CreateUserInput) (*entity.User, error) {

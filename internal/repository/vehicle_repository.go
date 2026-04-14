@@ -5,6 +5,7 @@ import (
 
 	"gorm.io/gorm"
 
+	"rental-management-api/internal/database"
 	"rental-management-api/internal/entity"
 )
 
@@ -26,12 +27,12 @@ func NewVehicleRepository(db *gorm.DB) VehicleRepository {
 }
 
 func (r *vehicleRepository) Create(ctx context.Context, data *entity.Vehicle) error {
-	return r.db.WithContext(ctx).Create(data).Error
+	return database.ExtractDB(ctx, r.db).Create(data).Error
 }
 
 func (r *vehicleRepository) GetByID(ctx context.Context, id uint) (*entity.Vehicle, error) {
 	var data entity.Vehicle
-	if err := r.db.WithContext(ctx).First(&data, id).Error; err != nil {
+	if err := database.ExtractDB(ctx, r.db).First(&data, id).Error; err != nil {
 		return nil, err
 	}
 	return &data, nil
@@ -39,7 +40,7 @@ func (r *vehicleRepository) GetByID(ctx context.Context, id uint) (*entity.Vehic
 
 func (r *vehicleRepository) GetByColumn(ctx context.Context, column string, value any) (entity.Vehicle, error) {
 	var data entity.Vehicle
-	if err := r.db.WithContext(ctx).Where(column+" = ?", value).First(&data).Error; err != nil {
+	if err := database.ExtractDB(ctx, r.db).Where(column+" = ?", value).First(&data).Error; err != nil {
 		return entity.Vehicle{}, err
 	}
 	return data, nil
@@ -47,14 +48,14 @@ func (r *vehicleRepository) GetByColumn(ctx context.Context, column string, valu
 
 func (r *vehicleRepository) List(ctx context.Context) ([]entity.Vehicle, error) {
 	var data []entity.Vehicle
-	err := r.db.WithContext(ctx).Find(&data).Error
+	err := database.ExtractDB(ctx, r.db).Find(&data).Error
 	return data, err
 }
 
 func (r *vehicleRepository) Update(ctx context.Context, data *entity.Vehicle) error {
-	return r.db.WithContext(ctx).Save(data).Error
+	return database.ExtractDB(ctx, r.db).Save(data).Error
 }
 
 func (r *vehicleRepository) Delete(ctx context.Context, id uint) error {
-	return r.db.WithContext(ctx).Delete(&entity.Vehicle{}, id).Error
+	return database.ExtractDB(ctx, r.db).Delete(&entity.Vehicle{}, id).Error
 }

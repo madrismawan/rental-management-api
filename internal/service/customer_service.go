@@ -3,8 +3,11 @@ package service
 import (
 	"context"
 
+	"rental-management-api/internal/database"
 	"rental-management-api/internal/entity"
 	"rental-management-api/internal/repository"
+
+	"gorm.io/gorm"
 )
 
 type CustomerService interface {
@@ -16,8 +19,16 @@ type CustomerService interface {
 	Delete(ctx context.Context, id uint) error
 }
 
+type CreateCustomerWithUserInput struct {
+	Name        string
+	Email       string
+	Password    string
+	PhoneNumber string
+	Address     string
+	AvatarURL   string
+}
+
 type CreateCustomerInput struct {
-	UserID      uint
 	PhoneNumber string
 	Address     string
 	AvatarURL   string
@@ -31,16 +42,48 @@ type UpdateCustomerInput struct {
 }
 
 type customerService struct {
-	repo repository.CustomerRepository
+	db          *gorm.DB
+	repo        repository.CustomerRepository
+	userService UserService
 }
 
-func NewCustomerService(repo repository.CustomerRepository) CustomerService {
-	return &customerService{repo: repo}
+func NewCustomerService(db *gorm.DB, userService UserService, repo repository.CustomerRepository) CustomerService {
+	return &customerService{
+		db:          db,
+		repo:        repo,
+		userService: userService,
+	}
+}
+
+func (s *customerService) CreateWithUser(ctx context.Context, data CreateCustomerWithUserInput) (*entity.Customer, error) {
+	err := s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		ctxTx := database.InjectTx(ctx, tx)
+		_, err := s.userService.Create(ctxTx, CreateUserInput{
+			Name:     data.Name,
+			Email:    data.Email,
+			Password: data.Password,
+		})
+		if err != nil {
+			return err
+		}
+		_, err = s.Create(ctxTx, CreateCustomerInput{
+			PhoneNumber: data.PhoneNumber,
+			Address:     data.Address,
+			AvatarURL:   data.AvatarURL,
+		})
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return nil, nil
 }
 
 func (s *customerService) Create(ctx context.Context, data CreateCustomerInput) (*entity.Customer, error) {
 	customer := entity.Customer{
-		UserID:      data.UserID,
 		PhoneNumber: data.PhoneNumber,
 		Address:     data.Address,
 		AvatarURL:   data.AvatarURL,

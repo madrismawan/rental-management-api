@@ -5,6 +5,7 @@ import (
 
 	"gorm.io/gorm"
 
+	"rental-management-api/internal/database"
 	"rental-management-api/internal/entity"
 )
 
@@ -26,12 +27,12 @@ func NewRentalRepository(db *gorm.DB) RentalRepository {
 }
 
 func (r *rentalRepository) Create(ctx context.Context, data *entity.Rental) error {
-	return r.db.WithContext(ctx).Create(data).Error
+	return database.ExtractDB(ctx, r.db).Create(data).Error
 }
 
 func (r *rentalRepository) GetByID(ctx context.Context, id uint) (*entity.Rental, error) {
 	var data entity.Rental
-	err := r.db.WithContext(ctx).
+	err := database.ExtractDB(ctx, r.db).
 		Preload("Customer").
 		Preload("Vehicle").
 		Preload("VehicleIncidents").
@@ -44,7 +45,7 @@ func (r *rentalRepository) GetByID(ctx context.Context, id uint) (*entity.Rental
 
 func (r *rentalRepository) GetByColumn(ctx context.Context, column string, value any) (entity.Rental, error) {
 	var data entity.Rental
-	err := r.db.WithContext(ctx).
+	err := database.ExtractDB(ctx, r.db).
 		Preload("Customer").
 		Preload("Vehicle").
 		Preload("VehicleIncidents").
@@ -58,7 +59,7 @@ func (r *rentalRepository) GetByColumn(ctx context.Context, column string, value
 
 func (r *rentalRepository) List(ctx context.Context) ([]entity.Rental, error) {
 	var data []entity.Rental
-	err := r.db.WithContext(ctx).
+	err := database.ExtractDB(ctx, r.db).
 		Preload("Customer").
 		Preload("Vehicle").
 		Preload("VehicleIncidents").
@@ -67,9 +68,9 @@ func (r *rentalRepository) List(ctx context.Context) ([]entity.Rental, error) {
 }
 
 func (r *rentalRepository) Update(ctx context.Context, data *entity.Rental) error {
-	return r.db.WithContext(ctx).Save(data).Error
+	return database.ExtractDB(ctx, r.db).Save(data).Error
 }
 
 func (r *rentalRepository) Delete(ctx context.Context, id uint) error {
-	return r.db.WithContext(ctx).Delete(&entity.Rental{}, id).Error
+	return database.ExtractDB(ctx, r.db).Delete(&entity.Rental{}, id).Error
 }

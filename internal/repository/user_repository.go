@@ -6,6 +6,7 @@ import (
 
 	"gorm.io/gorm"
 
+	"rental-management-api/internal/database"
 	"rental-management-api/internal/entity"
 	"rental-management-api/pkg/errs"
 )
@@ -28,12 +29,12 @@ func NewUserRepository(db *gorm.DB) UserRepository {
 }
 
 func (r *userRepository) Create(ctx context.Context, data *entity.User) error {
-	return r.db.WithContext(ctx).Create(data).Error
+	return database.ExtractDB(ctx, r.db).Create(data).Error
 }
 
 func (r *userRepository) GetByID(ctx context.Context, id uint) (*entity.User, error) {
 	var data entity.User
-	if err := r.db.WithContext(ctx).First(&data, id).Error; err != nil {
+	if err := database.ExtractDB(ctx, r.db).First(&data, id).Error; err != nil {
 		return nil, err
 	}
 	return &data, nil
@@ -41,7 +42,7 @@ func (r *userRepository) GetByID(ctx context.Context, id uint) (*entity.User, er
 
 func (r *userRepository) GetByColumn(ctx context.Context, column string, value any) (entity.User, error) {
 	var user entity.User
-	if err := r.db.WithContext(ctx).Where(column+" = ?", value).First(&user).Error; err != nil {
+	if err := database.ExtractDB(ctx, r.db).Where(column+" = ?", value).First(&user).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return entity.User{}, errs.ErrUserNotFound
 		}
@@ -52,14 +53,14 @@ func (r *userRepository) GetByColumn(ctx context.Context, column string, value a
 
 func (r *userRepository) List(ctx context.Context) ([]entity.User, error) {
 	var data []entity.User
-	err := r.db.WithContext(ctx).Find(&data).Error
+	err := database.ExtractDB(ctx, r.db).Find(&data).Error
 	return data, err
 }
 
 func (r *userRepository) Update(ctx context.Context, data *entity.User) error {
-	return r.db.WithContext(ctx).Save(data).Error
+	return database.ExtractDB(ctx, r.db).Save(data).Error
 }
 
 func (r *userRepository) Delete(ctx context.Context, id uint) error {
-	return r.db.WithContext(ctx).Delete(&entity.User{}, id).Error
+	return database.ExtractDB(ctx, r.db).Delete(&entity.User{}, id).Error
 }

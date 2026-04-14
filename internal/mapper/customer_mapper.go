@@ -7,7 +7,6 @@ import (
 
 func ToCustomerEntity(req dto.CreateCustomerRequest) entity.Customer {
 	return entity.Customer{
-		UserID:      req.UserID,
 		PhoneNumber: req.PhoneNumber,
 		Address:     req.Address,
 		AvatarURL:   req.AvatarURL,
@@ -15,9 +14,6 @@ func ToCustomerEntity(req dto.CreateCustomerRequest) entity.Customer {
 }
 
 func ApplyCustomerUpdate(customer *entity.Customer, req dto.UpdateCustomerRequest) {
-	if req.UserID != nil {
-		customer.UserID = *req.UserID
-	}
 	if req.PhoneNumber != nil {
 		customer.PhoneNumber = *req.PhoneNumber
 	}
@@ -32,7 +28,6 @@ func ApplyCustomerUpdate(customer *entity.Customer, req dto.UpdateCustomerReques
 func ToCustomerResource(customer entity.Customer) dto.CustomerResource {
 	return dto.CustomerResource{
 		ID:          customer.ID,
-		UserID:      customer.UserID,
 		PhoneNumber: customer.PhoneNumber,
 		Address:     customer.Address,
 		AvatarURL:   customer.AvatarURL,

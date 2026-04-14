@@ -7,6 +7,8 @@ import (
 	"rental-management-api/internal/constant"
 	"rental-management-api/internal/entity"
 	"rental-management-api/internal/repository"
+
+	"gorm.io/gorm"
 )
 
 type VehicleIncidentService interface {
@@ -41,11 +43,12 @@ type UpdateVehicleIncidentInput struct {
 }
 
 type vehicleIncidentService struct {
+	db   *gorm.DB
 	repo repository.VehicleIncidentRepository
 }
 
-func NewVehicleIncidentService(repo repository.VehicleIncidentRepository) VehicleIncidentService {
-	return &vehicleIncidentService{repo: repo}
+func NewVehicleIncidentService(db *gorm.DB, repo repository.VehicleIncidentRepository) VehicleIncidentService {
+	return &vehicleIncidentService{db: db, repo: repo}
 }
 
 func (s *vehicleIncidentService) Create(ctx context.Context, data CreateVehicleIncidentInput) (*entity.VehicleIncident, error) {

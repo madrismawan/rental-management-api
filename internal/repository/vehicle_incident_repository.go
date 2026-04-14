@@ -5,6 +5,7 @@ import (
 
 	"gorm.io/gorm"
 
+	"rental-management-api/internal/database"
 	"rental-management-api/internal/entity"
 )
 
@@ -26,12 +27,12 @@ func NewVehicleIncidentRepository(db *gorm.DB) VehicleIncidentRepository {
 }
 
 func (r *vehicleIncidentRepository) Create(ctx context.Context, data *entity.VehicleIncident) error {
-	return r.db.WithContext(ctx).Create(data).Error
+	return database.ExtractDB(ctx, r.db).Create(data).Error
 }
 
 func (r *vehicleIncidentRepository) GetByID(ctx context.Context, id uint) (*entity.VehicleIncident, error) {
 	var data entity.VehicleIncident
-	err := r.db.WithContext(ctx).
+	err := database.ExtractDB(ctx, r.db).
 		Preload("Vehicle").
 		Preload("Customer").
 		Preload("Rental").
@@ -44,7 +45,7 @@ func (r *vehicleIncidentRepository) GetByID(ctx context.Context, id uint) (*enti
 
 func (r *vehicleIncidentRepository) GetByColumn(ctx context.Context, column string, value any) (entity.VehicleIncident, error) {
 	var data entity.VehicleIncident
-	err := r.db.WithContext(ctx).
+	err := database.ExtractDB(ctx, r.db).
 		Preload("Vehicle").
 		Preload("Customer").
 		Preload("Rental").
@@ -58,7 +59,7 @@ func (r *vehicleIncidentRepository) GetByColumn(ctx context.Context, column stri
 
 func (r *vehicleIncidentRepository) List(ctx context.Context) ([]entity.VehicleIncident, error) {
 	var data []entity.VehicleIncident
-	err := r.db.WithContext(ctx).
+	err := database.ExtractDB(ctx, r.db).
 		Preload("Vehicle").
 		Preload("Customer").
 		Preload("Rental").
@@ -67,9 +68,9 @@ func (r *vehicleIncidentRepository) List(ctx context.Context) ([]entity.VehicleI
 }
 
 func (r *vehicleIncidentRepository) Update(ctx context.Context, data *entity.VehicleIncident) error {
-	return r.db.WithContext(ctx).Save(data).Error
+	return database.ExtractDB(ctx, r.db).Save(data).Error
 }
 
 func (r *vehicleIncidentRepository) Delete(ctx context.Context, id uint) error {
-	return r.db.WithContext(ctx).Delete(&entity.VehicleIncident{}, id).Error
+	return database.ExtractDB(ctx, r.db).Delete(&entity.VehicleIncident{}, id).Error
 }

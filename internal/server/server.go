@@ -56,12 +56,12 @@ func registerRoutes(engine *gin.Engine, cfg config.Config, db *gorm.DB) {
 	rentalRepo := repository.NewRentalRepository(db)
 	incidentRepo := repository.NewVehicleIncidentRepository(db)
 
-	userSvc := service.NewUserService(userRepo)
+	userSvc := service.NewUserService(db, userRepo)
 	authSvc := service.NewAuthService(userSvc, cfg.Auth.AccessTokenSecret, cfg.Auth.RefreshTokenSecret, cfg.Auth.TokenTTL)
-	customerSvc := service.NewCustomerService(customerRepo)
-	vehicleSvc := service.NewVehicleService(vehicleRepo)
-	rentalSvc := service.NewRentalService(rentalRepo)
-	incidentSvc := service.NewVehicleIncidentService(incidentRepo)
+	customerSvc := service.NewCustomerService(db, userSvc, customerRepo)
+	vehicleSvc := service.NewVehicleService(db, vehicleRepo)
+	rentalSvc := service.NewRentalService(db, rentalRepo)
+	incidentSvc := service.NewVehicleIncidentService(db, incidentRepo)
 
 	handler.NewAuthHandler(authSvc).RegisterRoutes(api)
 	handler.NewUserHandler(userSvc).Register(api)

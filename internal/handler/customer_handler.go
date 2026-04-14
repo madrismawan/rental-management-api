@@ -34,7 +34,6 @@ func (h *CustomerHandler) Create(ctx *gin.Context) {
 		return
 	}
 	created, err := h.svc.Create(ctx, service.CreateCustomerInput{
-		UserID:      req.UserID,
 		PhoneNumber: req.PhoneNumber,
 		Address:     req.Address,
 		AvatarURL:   req.AvatarURL,
@@ -81,7 +80,6 @@ func (h *CustomerHandler) Update(ctx *gin.Context) {
 		return
 	}
 	item, err := h.svc.Update(ctx, id, service.UpdateCustomerInput{
-		UserID:      req.UserID,
 		PhoneNumber: req.PhoneNumber,
 		Address:     req.Address,
 		AvatarURL:   req.AvatarURL,

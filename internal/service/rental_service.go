@@ -6,6 +6,8 @@ import (
 
 	"rental-management-api/internal/entity"
 	"rental-management-api/internal/repository"
+
+	"gorm.io/gorm"
 )
 
 type RentalService interface {
@@ -56,11 +58,12 @@ type UpdateRentalInput struct {
 }
 
 type rentalService struct {
+	db   *gorm.DB
 	repo repository.RentalRepository
 }
 
-func NewRentalService(repo repository.RentalRepository) RentalService {
-	return &rentalService{repo: repo}
+func NewRentalService(db *gorm.DB, repo repository.RentalRepository) RentalService {
+	return &rentalService{db: db, repo: repo}
 }
 
 func (s *rentalService) Create(ctx context.Context, data CreateRentalInput) (*entity.Rental, error) {
