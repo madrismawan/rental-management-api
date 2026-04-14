@@ -16,6 +16,7 @@ type CustomerService interface {
 	CreateWithUser(ctx context.Context, data CreateCustomerWithUserInput) (*entity.Customer, error)
 	GetByID(ctx context.Context, id uint) (*entity.Customer, error)
 	GetByColumn(ctx context.Context, column string, value any) (entity.Customer, error)
+	GetOptions(ctx context.Context) ([]entity.Customer, error)
 	List(ctx context.Context) ([]entity.Customer, error)
 	ListPaginated(ctx context.Context, page int, limit int) (*CustomerListPaginatedResult, error)
 	Update(ctx context.Context, id uint, data UpdateCustomerInput) (*entity.Customer, error)
@@ -119,6 +120,10 @@ func (s *customerService) GetByID(ctx context.Context, id uint) (*entity.Custome
 
 func (s *customerService) GetByColumn(ctx context.Context, column string, value any) (entity.Customer, error) {
 	return s.repo.GetByColumn(ctx, column, value)
+}
+
+func (s *customerService) GetOptions(ctx context.Context) ([]entity.Customer, error) {
+	return s.repo.GetOptions(ctx)
 }
 
 func (s *customerService) List(ctx context.Context) ([]entity.Customer, error) {

@@ -92,7 +92,7 @@ func ToVehicleOptionResource(vehicle entity.Vehicle) dto.VehicleOptionResource {
 		Name:      fmt.Sprintf("%s %s (%s)", vehicle.Brand, vehicle.Model, vehicle.PlateNumber),
 		DailyRate: vehicle.DailyRate,
 		Mileage:   vehicle.Mileage,
-		Conditon:  vehicle.Condition,
+		Condition: vehicle.Condition,
 	}
 }
 

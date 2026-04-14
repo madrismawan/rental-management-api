@@ -40,3 +40,18 @@ func ToCustomersResource(customers []entity.Customer, resolver AvatarURLResolver
 	}
 	return out
 }
+
+func ToCustomerOptionResource(customer entity.Customer) dto.CustomerOptionResource {
+	return dto.CustomerOptionResource{
+		ID:   customer.ID,
+		Name: customer.User.Name,
+	}
+}
+
+func ToCustomerOptionsResource(customers []entity.Customer) []dto.CustomerOptionResource {
+	out := make([]dto.CustomerOptionResource, 0, len(customers))
+	for _, item := range customers {
+		out = append(out, ToCustomerOptionResource(item))
+	}
+	return out
+}

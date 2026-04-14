@@ -56,5 +56,5 @@ type VehicleOptionResource struct {
 	Name      string                    `json:"name"`
 	DailyRate int64                     `json:"daily_rate"`
 	Mileage   int                       `json:"mileage"`
-	Conditon  constant.VehicleCondition `json:"condition"`
+	Condition constant.VehicleCondition `json:"condition"`
 }

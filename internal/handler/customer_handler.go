@@ -23,6 +23,7 @@ func (h *CustomerHandler) Register(rg *gin.RouterGroup) {
 	r := rg.Group("/customers")
 	r.POST("", h.Create)
 	r.GET("", h.List)
+	r.GET("/options", h.GetOptions)
 	r.GET("/:id", h.GetByID)
 	r.PUT("/:id", h.Update)
 	r.DELETE("/:id", h.Delete)
@@ -88,6 +89,16 @@ func (h *CustomerHandler) GetByID(ctx *gin.Context) {
 		return
 	}
 	ctx.JSON(http.StatusOK, resource{Message: "ok", Data: mapper.ToCustomerResource(*item, h.storageSvc)})
+}
+
+func (h *CustomerHandler) GetOptions(ctx *gin.Context) {
+	items, err := h.svc.GetOptions(ctx)
+	if err != nil {
+		writeError(ctx, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, resource{Message: "ok", Data: mapper.ToCustomerOptionsResource(items)})
 }
 
 func (h *CustomerHandler) Update(ctx *gin.Context) {

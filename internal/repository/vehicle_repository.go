@@ -52,7 +52,7 @@ func (r *vehicleRepository) GetByColumn(ctx context.Context, column string, valu
 func (r *vehicleRepository) GetOptions(ctx context.Context, status *constant.VehicleStatus) ([]entity.Vehicle, error) {
 	var data []entity.Vehicle
 
-	db := database.ExtractDB(ctx, r.db).Select("id", "brand", "model", "plate_number").Order("brand ASC, model ASC")
+	db := database.ExtractDB(ctx, r.db).Select("id", "brand", "model", "plate_number", "daily_rate", "mileage", "condition").Order("brand ASC, model ASC")
 	if status != nil {
 		db = db.Where("status = ?", *status)
 	}
