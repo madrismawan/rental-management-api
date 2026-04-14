@@ -33,7 +33,10 @@ func (h *CustomerHandler) Create(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, resource{Message: err.Error()})
 		return
 	}
-	created, err := h.svc.Create(ctx, service.CreateCustomerInput{
+	created, err := h.svc.CreateWithUser(ctx, service.CreateCustomerWithUserInput{
+		Name:        req.Name,
+		Email:       req.Email,
+		Password:    req.Password,
 		PhoneNumber: req.PhoneNumber,
 		Address:     req.Address,
 		AvatarURL:   req.AvatarURL,
@@ -46,12 +49,18 @@ func (h *CustomerHandler) Create(ctx *gin.Context) {
 }
 
 func (h *CustomerHandler) List(ctx *gin.Context) {
-	items, err := h.svc.List(ctx)
+	page, limit, err := parsePaginationQuery(ctx, 10)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, resource{Message: err.Error()})
+		return
+	}
+
+	result, err := h.svc.ListPaginated(ctx, page, limit)
 	if err != nil {
 		writeError(ctx, err)
 		return
 	}
-	ctx.JSON(http.StatusOK, resource{Message: "ok", Data: mapper.ToCustomersResource(items)})
+	ctx.JSON(http.StatusOK, resource{Message: "ok", Data: mapper.ToCustomersResource(result.Items), Meta: paginationMeta(result.Page, result.Limit, result.Total, result.TotalPages)})
 }
 
 func (h *CustomerHandler) GetByID(ctx *gin.Context) {
@@ -80,6 +89,9 @@ func (h *CustomerHandler) Update(ctx *gin.Context) {
 		return
 	}
 	item, err := h.svc.Update(ctx, id, service.UpdateCustomerInput{
+		Name:        req.Name,
+		Email:       req.Email,
+		Password:    req.Password,
 		PhoneNumber: req.PhoneNumber,
 		Address:     req.Address,
 		AvatarURL:   req.AvatarURL,

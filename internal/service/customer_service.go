@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 
+	"rental-management-api/internal/constant"
 	"rental-management-api/internal/database"
 	"rental-management-api/internal/entity"
 	"rental-management-api/internal/repository"
@@ -12,11 +13,21 @@ import (
 
 type CustomerService interface {
 	Create(ctx context.Context, data CreateCustomerInput) (*entity.Customer, error)
+	CreateWithUser(ctx context.Context, data CreateCustomerWithUserInput) (*entity.Customer, error)
 	GetByID(ctx context.Context, id uint) (*entity.Customer, error)
 	GetByColumn(ctx context.Context, column string, value any) (entity.Customer, error)
 	List(ctx context.Context) ([]entity.Customer, error)
+	ListPaginated(ctx context.Context, page int, limit int) (*CustomerListPaginatedResult, error)
 	Update(ctx context.Context, id uint, data UpdateCustomerInput) (*entity.Customer, error)
 	Delete(ctx context.Context, id uint) error
+}
+
+type CustomerListPaginatedResult struct {
+	Items      []entity.Customer
+	Page       int
+	Limit      int
+	Total      int64
+	TotalPages int
 }
 
 type CreateCustomerWithUserInput struct {
@@ -29,6 +40,7 @@ type CreateCustomerWithUserInput struct {
 }
 
 type CreateCustomerInput struct {
+	UserID      uint
 	PhoneNumber string
 	Address     string
 	AvatarURL   string
@@ -36,6 +48,9 @@ type CreateCustomerInput struct {
 
 type UpdateCustomerInput struct {
 	UserID      *uint
+	Name        *string
+	Email       *string
+	Password    *string
 	PhoneNumber *string
 	Address     *string
 	AvatarURL   *string
@@ -56,17 +71,20 @@ func NewCustomerService(db *gorm.DB, userService UserService, repo repository.Cu
 }
 
 func (s *customerService) CreateWithUser(ctx context.Context, data CreateCustomerWithUserInput) (*entity.Customer, error) {
+	var customer *entity.Customer
 	err := s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		ctxTx := database.InjectTx(ctx, tx)
-		_, err := s.userService.Create(ctxTx, CreateUserInput{
+		user, err := s.userService.Create(ctxTx, CreateUserInput{
 			Name:     data.Name,
 			Email:    data.Email,
 			Password: data.Password,
+			Role:     constant.UserRoleCustomer,
 		})
 		if err != nil {
 			return err
 		}
-		_, err = s.Create(ctxTx, CreateCustomerInput{
+		customer, err = s.Create(ctxTx, CreateCustomerInput{
+			UserID:      user.ID,
 			PhoneNumber: data.PhoneNumber,
 			Address:     data.Address,
 			AvatarURL:   data.AvatarURL,
@@ -79,11 +97,12 @@ func (s *customerService) CreateWithUser(ctx context.Context, data CreateCustome
 	if err != nil {
 		return nil, err
 	}
-	return nil, nil
+	return customer, nil
 }
 
 func (s *customerService) Create(ctx context.Context, data CreateCustomerInput) (*entity.Customer, error) {
 	customer := entity.Customer{
+		UserID:      data.UserID,
 		PhoneNumber: data.PhoneNumber,
 		Address:     data.Address,
 		AvatarURL:   data.AvatarURL,
@@ -106,25 +125,75 @@ func (s *customerService) List(ctx context.Context) ([]entity.Customer, error) {
 	return s.repo.List(ctx)
 }
 
-func (s *customerService) Update(ctx context.Context, id uint, data UpdateCustomerInput) (*entity.Customer, error) {
-	customer, err := s.repo.GetByID(ctx, id)
+func (s *customerService) ListPaginated(ctx context.Context, page int, limit int) (*CustomerListPaginatedResult, error) {
+	if page <= 0 {
+		page = 1
+	}
+	if limit <= 0 {
+		limit = 10
+	}
+
+	items, total, err := s.repo.ListPaginated(ctx, page, limit)
 	if err != nil {
 		return nil, err
 	}
-	if data.UserID != nil {
-		customer.UserID = *data.UserID
-	}
-	if data.PhoneNumber != nil {
-		customer.PhoneNumber = *data.PhoneNumber
-	}
-	if data.Address != nil {
-		customer.Address = *data.Address
-	}
-	if data.AvatarURL != nil {
-		customer.AvatarURL = *data.AvatarURL
+
+	totalPages := 0
+	if total > 0 {
+		totalPages = int((total + int64(limit) - 1) / int64(limit))
 	}
 
-	if err := s.repo.Update(ctx, customer); err != nil {
+	return &CustomerListPaginatedResult{
+		Items:      items,
+		Page:       page,
+		Limit:      limit,
+		Total:      total,
+		TotalPages: totalPages,
+	}, nil
+}
+
+func (s *customerService) Update(ctx context.Context, id uint, data UpdateCustomerInput) (*entity.Customer, error) {
+	var customer *entity.Customer
+	err := s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		ctxTx := database.InjectTx(ctx, tx)
+
+		var err error
+		customer, err = s.repo.GetByID(ctxTx, id)
+		if err != nil {
+			return err
+		}
+
+		if data.UserID != nil {
+			customer.UserID = *data.UserID
+		}
+
+		if data.Name != nil || data.Email != nil || data.Password != nil {
+			_, err = s.userService.Update(ctxTx, customer.UserID, UpdateUserInput{
+				Name:     data.Name,
+				Email:    data.Email,
+				Password: data.Password,
+			})
+			if err != nil {
+				return err
+			}
+		}
+
+		if data.PhoneNumber != nil {
+			customer.PhoneNumber = *data.PhoneNumber
+		}
+		if data.Address != nil {
+			customer.Address = *data.Address
+		}
+		if data.AvatarURL != nil {
+			customer.AvatarURL = *data.AvatarURL
+		}
+
+		if err := s.repo.Update(ctxTx, customer); err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
 		return nil, err
 	}
 	return customer, nil

@@ -2,10 +2,12 @@ package service
 
 import (
 	"context"
+	"fmt"
 
 	"rental-management-api/internal/constant"
 	"rental-management-api/internal/entity"
 	"rental-management-api/internal/repository"
+	"rental-management-api/pkg/errs"
 
 	"gorm.io/gorm"
 )
@@ -43,11 +45,20 @@ func NewUserService(db *gorm.DB, repo repository.UserRepository) UserService {
 }
 
 func (s *userService) Create(ctx context.Context, data CreateUserInput) (*entity.User, error) {
+	hashedPassword, err := HashPassword(data.Password)
+	if err != nil {
+		return nil, fmt.Errorf("hash password: %w", err)
+	}
+	existsUsers, err := s.GetByColumn(ctx, "email", data.Email)
+	if err == nil && existsUsers.ID != 0 {
+		return nil, errs.ErrEmailDuplicate
+	}
+
 	user := entity.User{
 		Name:     data.Name,
 		Email:    data.Email,
 		Role:     data.Role,
-		Password: data.Password,
+		Password: hashedPassword,
 	}
 	if err := s.repo.Create(ctx, &user); err != nil {
 		return nil, err
@@ -80,8 +91,12 @@ func (s *userService) Update(ctx context.Context, id uint, data UpdateUserInput)
 	if data.Role != nil {
 		user.Role = *data.Role
 	}
-	if data.Password != nil {
-		user.Password = *data.Password
+	if data.Password != nil && *data.Password != "" {
+		hashedPassword, err := HashPassword(*data.Password)
+		if err != nil {
+			return nil, fmt.Errorf("hash password: %w", err)
+		}
+		user.Password = hashedPassword
 	}
 	if err := s.repo.Update(ctx, user); err != nil {
 		return nil, err

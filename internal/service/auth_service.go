@@ -44,11 +44,16 @@ func NewAuthService(userService UserService, accessTokenSecret string, refreshTo
 }
 
 func (s *authService) Register(c *gin.Context, input dto.RegisterRequest) (entity.User, error) {
+	hashedPassword, err := HashPassword(input.Password)
+	if err != nil {
+		return entity.User{}, fmt.Errorf("hash password: %w", err)
+	}
+
 	u, err := s.userService.Create(c, CreateUserInput{
 		Name:     input.Name,
 		Email:    input.Email,
 		Role:     constant.UserRoleCustomer,
-		Password: input.Password,
+		Password: hashedPassword,
 	})
 	if err != nil {
 		return entity.User{}, err
@@ -120,6 +125,11 @@ func (s *authService) VerifyToken(c *gin.Context, token string) (entity.User, er
 	}
 
 	return user, nil
+}
+
+func HashPassword(password string) (string, error) {
+	bytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	return string(bytes), err
 }
 
 func comparePassword(hash, password string) error {
