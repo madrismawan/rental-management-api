@@ -15,12 +15,13 @@ type CreateCustomerRequest struct {
 }
 
 type UpdateCustomerRequest struct {
-	Name        *string `json:"name"`
-	Email       *string `json:"email"`
-	Password    *string `json:"password"`
-	PhoneNumber *string `json:"phone_number"`
-	Address     *string `json:"address"`
-	AvatarURL   *string `json:"avatar_url"`
+	Name        *string               `json:"name" form:"name"`
+	Email       *string               `json:"email" form:"email"`
+	Password    *string               `json:"password" form:"password"`
+	PhoneNumber *string               `json:"phone_number" form:"phone_number"`
+	Address     *string               `json:"address" form:"address"`
+	AvatarURL   *string               `json:"avatar_url" form:"avatar_url"`
+	Avatar      *multipart.FileHeader `form:"avatar"`
 }
 
 type CustomerResource struct {

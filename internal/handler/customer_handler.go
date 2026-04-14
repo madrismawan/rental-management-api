@@ -97,17 +97,28 @@ func (h *CustomerHandler) Update(ctx *gin.Context) {
 		return
 	}
 	var req dto.UpdateCustomerRequest
-	if err := ctx.ShouldBindJSON(&req); err != nil {
+	if err := ctx.ShouldBind(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, resource{Message: err.Error()})
 		return
 	}
+
+	avatarURL := req.AvatarURL
+	if req.Avatar != nil {
+		uploadedURL, err := h.storageSvc.Upload(ctx, req.Avatar, "customers/avatars")
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, resource{Message: err.Error()})
+			return
+		}
+		avatarURL = &uploadedURL
+	}
+
 	item, err := h.svc.Update(ctx, id, service.UpdateCustomerInput{
 		Name:        req.Name,
 		Email:       req.Email,
 		Password:    req.Password,
 		PhoneNumber: req.PhoneNumber,
 		Address:     req.Address,
-		AvatarURL:   req.AvatarURL,
+		AvatarURL:   avatarURL,
 	})
 	if err != nil {
 		writeError(ctx, err)
