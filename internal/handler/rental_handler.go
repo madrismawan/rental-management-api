@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -38,18 +39,9 @@ func (h *RentalHandler) Create(ctx *gin.Context) {
 		VehicleID:             req.VehicleID,
 		StartDate:             req.StartDate,
 		EndDate:               req.EndDate,
-		TotalDay:              req.TotalDay,
-		ReturnDate:            req.ReturnDate,
-		Price:                 req.Price,
-		PenaltyFee:            req.PenaltyFee,
-		Subtotal:              req.Subtotal,
 		Notes:                 req.Notes,
-		Status:                req.Status,
 		VehicleConditionStart: req.VehicleConditionStart,
-		VehicleConditionEnd:   req.VehicleConditionEnd,
 		MileageStart:          req.MileageStart,
-		MileageUsed:           req.MileageUsed,
-		MileageEnd:            req.MileageEnd,
 	})
 	if err != nil {
 		writeError(ctx, err)
@@ -70,6 +62,8 @@ func (h *RentalHandler) List(ctx *gin.Context) {
 		writeError(ctx, err)
 		return
 	}
+	fmt.Println("rismwan")
+	fmt.Println(result)
 	ctx.JSON(http.StatusOK, resource{Message: "ok", Data: mapper.ToRentalsResource(result.Items), Meta: paginationMeta(result.Page, result.Limit, result.Total, result.TotalPages)})
 }
 

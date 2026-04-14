@@ -34,9 +34,8 @@ func (r *rentalRepository) Create(ctx context.Context, data *entity.Rental) erro
 func (r *rentalRepository) GetByID(ctx context.Context, id uint) (*entity.Rental, error) {
 	var data entity.Rental
 	err := database.ExtractDB(ctx, r.db).
-		Preload("Customer").
+		Preload("Customer.User").
 		Preload("Vehicle").
-		Preload("VehicleIncidents").
 		First(&data, id).Error
 	if err != nil {
 		return nil, err
@@ -47,9 +46,8 @@ func (r *rentalRepository) GetByID(ctx context.Context, id uint) (*entity.Rental
 func (r *rentalRepository) GetByColumn(ctx context.Context, column string, value any) (entity.Rental, error) {
 	var data entity.Rental
 	err := database.ExtractDB(ctx, r.db).
-		Preload("Customer").
+		Preload("Customer.User").
 		Preload("Vehicle").
-		Preload("VehicleIncidents").
 		Where(column+" = ?", value).
 		First(&data).Error
 	if err != nil {
@@ -61,9 +59,8 @@ func (r *rentalRepository) GetByColumn(ctx context.Context, column string, value
 func (r *rentalRepository) List(ctx context.Context) ([]entity.Rental, error) {
 	var data []entity.Rental
 	err := database.ExtractDB(ctx, r.db).
-		Preload("Customer").
+		Preload("Customer.User").
 		Preload("Vehicle").
-		Preload("VehicleIncidents").
 		Find(&data).Error
 	return data, err
 }
@@ -79,9 +76,8 @@ func (r *rentalRepository) ListPaginated(ctx context.Context, page int, limit in
 
 	offset := (page - 1) * limit
 	err := database.ExtractDB(ctx, r.db).
-		Preload("Customer").
+		Preload("Customer.User").
 		Preload("Vehicle").
-		Preload("VehicleIncidents").
 		Order("id DESC").
 		Offset(offset).
 		Limit(limit).

@@ -2,8 +2,11 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"time"
 
+	"rental-management-api/internal/constant"
+	"rental-management-api/internal/database"
 	"rental-management-api/internal/entity"
 	"rental-management-api/internal/repository"
 
@@ -33,18 +36,9 @@ type CreateRentalInput struct {
 	VehicleID             uint
 	StartDate             time.Time
 	EndDate               time.Time
-	TotalDay              int
-	ReturnDate            *time.Time
-	Price                 int64
-	PenaltyFee            int64
-	Subtotal              int64
 	Notes                 string
-	Status                entity.RentalStatus
 	VehicleConditionStart string
-	VehicleConditionEnd   string
 	MileageStart          int
-	MileageUsed           int
-	MileageEnd            int
 }
 
 type UpdateRentalInput struct {
@@ -67,36 +61,66 @@ type UpdateRentalInput struct {
 }
 
 type rentalService struct {
-	db   *gorm.DB
-	repo repository.RentalRepository
+	db             *gorm.DB
+	vehicleService VehicleService
+	repo           repository.RentalRepository
 }
 
-func NewRentalService(db *gorm.DB, repo repository.RentalRepository) RentalService {
-	return &rentalService{db: db, repo: repo}
+func NewRentalService(db *gorm.DB, repo repository.RentalRepository, vehicleService VehicleService) RentalService {
+	return &rentalService{db: db, repo: repo, vehicleService: vehicleService}
 }
 
 func (s *rentalService) Create(ctx context.Context, data CreateRentalInput) (*entity.Rental, error) {
-	rental := entity.Rental{
-		CustomerID:            data.CustomerID,
-		VehicleID:             data.VehicleID,
-		StartDate:             data.StartDate,
-		EndDate:               data.EndDate,
-		TotalDay:              data.TotalDay,
-		ReturnDate:            data.ReturnDate,
-		Price:                 data.Price,
-		PenaltyFee:            data.PenaltyFee,
-		Subtotal:              data.Subtotal,
-		Notes:                 data.Notes,
-		Status:                data.Status,
-		VehicleConditionStart: data.VehicleConditionStart,
-		VehicleConditionEnd:   data.VehicleConditionEnd,
-		MileageStart:          data.MileageStart,
-		MileageUsed:           data.MileageUsed,
-		MileageEnd:            data.MileageEnd,
+	if data.EndDate.Before(data.StartDate) {
+		return nil, fmt.Errorf("end_date must be greater than or equal to start_date")
 	}
-	if err := s.repo.Create(ctx, &rental); err != nil {
+
+	vehicle, err := s.vehicleService.GetByID(ctx, data.VehicleID)
+	if err != nil {
 		return nil, err
 	}
+
+	totalDay := int(data.EndDate.Sub(data.StartDate).Hours() / 24)
+	if totalDay <= 0 {
+		totalDay = 1
+	}
+
+	price := vehicle.DailyRate
+	subtotal := price * int64(totalDay)
+
+	var rental entity.Rental
+	err = s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		ctxTx := database.InjectTx(ctx, tx)
+		rental = entity.Rental{
+			CustomerID:            data.CustomerID,
+			VehicleID:             data.VehicleID,
+			StartDate:             data.StartDate,
+			EndDate:               data.EndDate,
+			TotalDay:              totalDay,
+			Price:                 price,
+			PenaltyFee:            0,
+			Subtotal:              subtotal,
+			Notes:                 data.Notes,
+			Status:                entity.RentalStatusPending,
+			VehicleConditionStart: data.VehicleConditionStart,
+			MileageStart:          data.MileageStart,
+			MileageUsed:           0,
+			MileageEnd:            data.MileageStart,
+		}
+
+		err = s.repo.Create(ctxTx, &rental)
+		if err != nil {
+			return err
+		}
+		vehicle.Status = constant.VehicleStatusRented
+		if _, err := s.vehicleService.Update(ctxTx, vehicle.ID, UpdateVehicleInput{
+			Status: &vehicle.Status,
+		}); err != nil {
+			return err
+		}
+		return nil
+	})
+
 	return &rental, nil
 }
 

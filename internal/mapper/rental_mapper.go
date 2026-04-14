@@ -1,30 +1,10 @@
 package mapper
 
 import (
+	"fmt"
 	"rental-management-api/internal/dto"
 	"rental-management-api/internal/entity"
 )
-
-func ToRentalEntity(req dto.CreateRentalRequest) entity.Rental {
-	return entity.Rental{
-		CustomerID:            req.CustomerID,
-		VehicleID:             req.VehicleID,
-		StartDate:             req.StartDate,
-		EndDate:               req.EndDate,
-		TotalDay:              req.TotalDay,
-		ReturnDate:            req.ReturnDate,
-		Price:                 req.Price,
-		PenaltyFee:            req.PenaltyFee,
-		Subtotal:              req.Subtotal,
-		Notes:                 req.Notes,
-		Status:                req.Status,
-		VehicleConditionStart: req.VehicleConditionStart,
-		VehicleConditionEnd:   req.VehicleConditionEnd,
-		MileageStart:          req.MileageStart,
-		MileageUsed:           req.MileageUsed,
-		MileageEnd:            req.MileageEnd,
-	}
-}
 
 func ApplyRentalUpdate(rental *entity.Rental, req dto.UpdateRentalRequest) {
 	if req.CustomerID != nil {
@@ -81,7 +61,9 @@ func ToRentalResource(rental entity.Rental) dto.RentalResource {
 	return dto.RentalResource{
 		ID:                    rental.ID,
 		CustomerID:            rental.CustomerID,
+		CustomerName:          rental.Customer.User.Name,
 		VehicleID:             rental.VehicleID,
+		VehicleName:           fmt.Sprintf("%s %s (%s)", rental.Vehicle.Brand, rental.Vehicle.Model, rental.Vehicle.PlateNumber),
 		StartDate:             rental.StartDate,
 		EndDate:               rental.EndDate,
 		TotalDay:              rental.TotalDay,
