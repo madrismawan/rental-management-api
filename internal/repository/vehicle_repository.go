@@ -5,6 +5,7 @@ import (
 
 	"gorm.io/gorm"
 
+	"rental-management-api/internal/constant"
 	"rental-management-api/internal/database"
 	"rental-management-api/internal/entity"
 )
@@ -13,6 +14,7 @@ type VehicleRepository interface {
 	Create(ctx context.Context, data *entity.Vehicle) error
 	GetByID(ctx context.Context, id uint) (*entity.Vehicle, error)
 	GetByColumn(ctx context.Context, column string, value any) (entity.Vehicle, error)
+	GetOptions(ctx context.Context, status *constant.VehicleStatus) ([]entity.Vehicle, error)
 	List(ctx context.Context) ([]entity.Vehicle, error)
 	ListPaginated(ctx context.Context, page int, limit int) ([]entity.Vehicle, int64, error)
 	Update(ctx context.Context, data *entity.Vehicle) error
@@ -45,6 +47,18 @@ func (r *vehicleRepository) GetByColumn(ctx context.Context, column string, valu
 		return entity.Vehicle{}, err
 	}
 	return data, nil
+}
+
+func (r *vehicleRepository) GetOptions(ctx context.Context, status *constant.VehicleStatus) ([]entity.Vehicle, error) {
+	var data []entity.Vehicle
+
+	db := database.ExtractDB(ctx, r.db).Select("id", "brand", "model", "plate_number").Order("brand ASC, model ASC")
+	if status != nil {
+		db = db.Where("status = ?", *status)
+	}
+
+	err := db.Find(&data).Error
+	return data, err
 }
 
 func (r *vehicleRepository) List(ctx context.Context) ([]entity.Vehicle, error) {

@@ -14,6 +14,7 @@ type VehicleService interface {
 	Create(ctx context.Context, data CreateVehicleInput) (*entity.Vehicle, error)
 	GetByID(ctx context.Context, id uint) (*entity.Vehicle, error)
 	GetByColumn(ctx context.Context, column string, value any) (entity.Vehicle, error)
+	GetOptions(ctx context.Context, status *constant.VehicleStatus) ([]entity.Vehicle, error)
 	List(ctx context.Context) ([]entity.Vehicle, error)
 	ListPaginated(ctx context.Context, page int, limit int) (*VehicleListPaginatedResult, error)
 	Update(ctx context.Context, id uint, data UpdateVehicleInput) (*entity.Vehicle, error)
@@ -37,6 +38,7 @@ type CreateVehicleInput struct {
 	Year        int
 	Mileage     int
 	DailyRate   int64
+	Condition   constant.VehicleCondition
 	Status      constant.VehicleStatus
 	Notes       string
 }
@@ -50,6 +52,7 @@ type UpdateVehicleInput struct {
 	Year        *int
 	Mileage     *int
 	DailyRate   *int64
+	Condition   *constant.VehicleCondition
 	Status      *constant.VehicleStatus
 	Notes       *string
 }
@@ -73,6 +76,7 @@ func (s *vehicleService) Create(ctx context.Context, data CreateVehicleInput) (*
 		Year:        data.Year,
 		Mileage:     data.Mileage,
 		DailyRate:   data.DailyRate,
+		Condition:   data.Condition,
 		Status:      data.Status,
 		Notes:       data.Notes,
 	}
@@ -88,6 +92,10 @@ func (s *vehicleService) GetByID(ctx context.Context, id uint) (*entity.Vehicle,
 
 func (s *vehicleService) GetByColumn(ctx context.Context, column string, value any) (entity.Vehicle, error) {
 	return s.repo.GetByColumn(ctx, column, value)
+}
+
+func (s *vehicleService) GetOptions(ctx context.Context, status *constant.VehicleStatus) ([]entity.Vehicle, error) {
+	return s.repo.GetOptions(ctx, status)
 }
 
 func (s *vehicleService) List(ctx context.Context) ([]entity.Vehicle, error) {
@@ -149,6 +157,9 @@ func (s *vehicleService) Update(ctx context.Context, id uint, data UpdateVehicle
 	}
 	if data.DailyRate != nil {
 		vehicle.DailyRate = *data.DailyRate
+	}
+	if data.Condition != nil {
+		vehicle.Condition = *data.Condition
 	}
 	if data.Status != nil {
 		vehicle.Status = *data.Status

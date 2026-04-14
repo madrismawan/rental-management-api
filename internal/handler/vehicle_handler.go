@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"rental-management-api/internal/constant"
 	"rental-management-api/internal/dto"
 	"rental-management-api/internal/mapper"
 	"rental-management-api/internal/service"
@@ -22,6 +23,7 @@ func (h *VehicleHandler) Register(rg *gin.RouterGroup) {
 	r := rg.Group("/vehicles")
 	r.POST("", h.Create)
 	r.GET("", h.List)
+	r.GET("/options", h.GetOptions)
 	r.GET("/:id", h.GetByID)
 	r.PUT("/:id", h.Update)
 	r.DELETE("/:id", h.Delete)
@@ -42,6 +44,7 @@ func (h *VehicleHandler) Create(ctx *gin.Context) {
 		Year:        req.Year,
 		Mileage:     req.Mileage,
 		DailyRate:   req.DailyRate,
+		Condition:   req.Condition,
 		Status:      req.Status,
 		Notes:       req.Notes,
 	})
@@ -81,6 +84,22 @@ func (h *VehicleHandler) GetByID(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, resource{Message: "ok", Data: mapper.ToVehicleResource(*item)})
 }
 
+func (h *VehicleHandler) GetOptions(ctx *gin.Context) {
+	var status *constant.VehicleStatus
+	if rawStatus := ctx.Query("status"); rawStatus != "" {
+		parsedStatus := constant.VehicleStatus(rawStatus)
+		status = &parsedStatus
+	}
+
+	items, err := h.svc.GetOptions(ctx, status)
+	if err != nil {
+		writeError(ctx, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, resource{Message: "ok", Data: mapper.ToVehicleOptionsResource(items)})
+}
+
 func (h *VehicleHandler) Update(ctx *gin.Context) {
 	id, err := parseID(ctx)
 	if err != nil {
@@ -101,6 +120,7 @@ func (h *VehicleHandler) Update(ctx *gin.Context) {
 		Year:        req.Year,
 		Mileage:     req.Mileage,
 		DailyRate:   req.DailyRate,
+		Condition:   req.Condition,
 		Status:      req.Status,
 		Notes:       req.Notes,
 	})

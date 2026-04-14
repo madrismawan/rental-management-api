@@ -159,6 +159,12 @@ func SeedVehicles(db *gorm.DB) error {
 		constant.VehicleStatusRented,
 		constant.VehicleStatusMaintenance,
 	}
+	conditions := []constant.VehicleCondition{
+		constant.VehicleConditionGood,
+		constant.VehicleConditionGood,
+		constant.VehicleConditionService,
+		constant.VehicleConditionBroke,
+	}
 
 	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
 	start := int(count) + 1
@@ -176,6 +182,7 @@ func SeedVehicles(db *gorm.DB) error {
 		mileage := 10000 + rng.Intn(140001)
 		dailyRate := int64(250000 + rng.Intn(700001))
 		status := statuses[rng.Intn(len(statuses))]
+		condition := conditions[rng.Intn(len(conditions))]
 
 		vehicles = append(vehicles, entity.Vehicle{
 			PlateNumber: plate,
@@ -186,6 +193,7 @@ func SeedVehicles(db *gorm.DB) error {
 			Year:        year,
 			Mileage:     mileage,
 			DailyRate:   dailyRate,
+			Condition:   condition,
 			Status:      status,
 			Notes:       "seeded vehicle",
 		})
