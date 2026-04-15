@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"rental-management-api/internal/constant"
+	"rental-management-api/internal/database"
 	"rental-management-api/internal/entity"
 	"rental-management-api/internal/repository"
 
@@ -14,7 +15,7 @@ type CustomerLogService interface {
 	Create(ctx context.Context, data CreateCustomerLogInput) (*entity.CustomerLog, error)
 	GetByColumn(ctx context.Context, column string, value any) (entity.CustomerLog, error)
 	List(ctx context.Context) ([]entity.CustomerLog, error)
-	ListPaginated(ctx context.Context, page int, limit int) (*CustomerLogListPaginatedResult, error)
+	ListPaginated(ctx context.Context, page int, limit int, customerID *uint) (*CustomerLogListPaginatedResult, error)
 }
 
 type CustomerLogListPaginatedResult struct {
@@ -40,24 +41,52 @@ type UpdateCustomerLogInput struct {
 }
 
 type customerLogService struct {
-	db   *gorm.DB
-	repo repository.CustomerLogRepository
+	db           *gorm.DB
+	repo         repository.CustomerLogRepository
+	customerRepo repository.CustomerRepository
 }
 
-func NewCustomerLogService(db *gorm.DB, repo repository.CustomerLogRepository) CustomerLogService {
-	return &customerLogService{db: db, repo: repo}
+func NewCustomerLogService(db *gorm.DB, repo repository.CustomerLogRepository, customerRepo repository.CustomerRepository) CustomerLogService {
+	return &customerLogService{db: db, repo: repo, customerRepo: customerRepo}
 }
 
 func (s *customerLogService) Create(ctx context.Context, data CreateCustomerLogInput) (*entity.CustomerLog, error) {
-	item := entity.CustomerLog{
-		CustomerID:   data.CustomerID,
-		CustomerName: data.CustomerName,
-		Reason:       data.Reason,
-		Status:       data.Status,
-	}
-	if err := s.repo.Create(ctx, &item); err != nil {
+	item := entity.CustomerLog{}
+	err := s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		ctxTx := database.InjectTx(ctx, tx)
+
+		customer, err := s.customerRepo.GetByID(ctxTx, data.CustomerID)
+		if err != nil {
+			return err
+		}
+
+		customerName := customer.User.Name
+		if customerName == "" {
+			customerName = data.CustomerName
+		}
+
+		customerStatus := constant.CustomerStatus(data.Status)
+		customer.Status = customerStatus
+		if err := s.customerRepo.Update(ctxTx, customer); err != nil {
+			return err
+		}
+
+		item = entity.CustomerLog{
+			CustomerID:   data.CustomerID,
+			CustomerName: customerName,
+			Reason:       data.Reason,
+			Status:       data.Status,
+		}
+		if err := s.repo.Create(ctxTx, &item); err != nil {
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
 		return nil, err
 	}
+
 	return &item, nil
 }
 
@@ -69,7 +98,7 @@ func (s *customerLogService) List(ctx context.Context) ([]entity.CustomerLog, er
 	return s.repo.List(ctx)
 }
 
-func (s *customerLogService) ListPaginated(ctx context.Context, page int, limit int) (*CustomerLogListPaginatedResult, error) {
+func (s *customerLogService) ListPaginated(ctx context.Context, page int, limit int, customerID *uint) (*CustomerLogListPaginatedResult, error) {
 	if page <= 0 {
 		page = 1
 	}
@@ -77,7 +106,7 @@ func (s *customerLogService) ListPaginated(ctx context.Context, page int, limit 
 		limit = 10
 	}
 
-	items, total, err := s.repo.ListPaginated(ctx, page, limit)
+	items, total, err := s.repo.ListPaginated(ctx, page, limit, customerID)
 	if err != nil {
 		return nil, err
 	}

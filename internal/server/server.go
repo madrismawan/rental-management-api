@@ -61,8 +61,8 @@ func registerRoutes(engine *gin.Engine, cfg config.Config, db *gorm.DB) {
 
 	userSvc := service.NewUserService(db, userRepo)
 	authSvc := service.NewAuthService(userSvc, cfg.Auth.AccessTokenSecret, cfg.Auth.RefreshTokenSecret, cfg.Auth.TokenTTL)
-	customerSvc := service.NewCustomerService(db, userSvc, customerRepo)
-	customerLogSvc := service.NewCustomerLogService(db, customerLogRepo)
+	customerLogSvc := service.NewCustomerLogService(db, customerLogRepo, customerRepo)
+	customerSvc := service.NewCustomerService(db, userSvc, customerRepo, customerLogRepo)
 	storageSvc := service.NewStorageService(cfg.Storage)
 	vehicleSvc := service.NewVehicleService(db, vehicleRepo)
 	incidentSvc := service.NewVehicleIncidentService(db, incidentRepo, vehicleSvc, rentalRepo)

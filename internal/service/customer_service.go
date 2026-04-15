@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 
 	"rental-management-api/internal/constant"
 	"rental-management-api/internal/database"
@@ -61,16 +62,18 @@ type UpdateCustomerInput struct {
 }
 
 type customerService struct {
-	db          *gorm.DB
-	repo        repository.CustomerRepository
-	userService UserService
+	db              *gorm.DB
+	repo            repository.CustomerRepository
+	userService     UserService
+	customerLogRepo repository.CustomerLogRepository
 }
 
-func NewCustomerService(db *gorm.DB, userService UserService, repo repository.CustomerRepository) CustomerService {
+func NewCustomerService(db *gorm.DB, userService UserService, repo repository.CustomerRepository, customerLogRepo repository.CustomerLogRepository) CustomerService {
 	return &customerService{
-		db:          db,
-		repo:        repo,
-		userService: userService,
+		db:              db,
+		repo:            repo,
+		userService:     userService,
+		customerLogRepo: customerLogRepo,
 	}
 }
 
@@ -208,6 +211,17 @@ func (s *customerService) Update(ctx context.Context, id uint, data UpdateCustom
 
 		if err := s.repo.Update(ctxTx, customer); err != nil {
 			return err
+		}
+
+		if data.Status != nil && s.customerLogRepo != nil {
+			logReason := fmt.Sprintf("admin %s status updated", *data.Status)
+			if err := s.customerLogRepo.Create(ctxTx, &entity.CustomerLog{
+				CustomerID: customer.ID,
+				Reason:     logReason,
+				Status:     constant.CustomerLogStatus(*data.Status),
+			}); err != nil {
+				return err
+			}
 		}
 		return nil
 	})

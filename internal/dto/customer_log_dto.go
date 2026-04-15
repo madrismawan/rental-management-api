@@ -7,10 +7,9 @@ import (
 )
 
 type CreateCustomerLogRequest struct {
-	CustomerID   uint                       `json:"customer_id" binding:"required"`
-	CustomerName string                     `json:"customer_name" binding:"required"`
-	Reason       string                     `json:"reason"`
-	Status       constant.CustomerLogStatus `json:"status" binding:"required"`
+	CustomerID uint                       `json:"customer_id" binding:"required"`
+	Reason     string                     `json:"reason"`
+	Status     constant.CustomerLogStatus `json:"status" binding:"required"`
 }
 
 type UpdateCustomerLogRequest struct {

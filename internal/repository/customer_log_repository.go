@@ -13,7 +13,7 @@ type CustomerLogRepository interface {
 	Create(ctx context.Context, data *entity.CustomerLog) error
 	GetByColumn(ctx context.Context, column string, value any) (entity.CustomerLog, error)
 	List(ctx context.Context) ([]entity.CustomerLog, error)
-	ListPaginated(ctx context.Context, page int, limit int) ([]entity.CustomerLog, int64, error)
+	ListPaginated(ctx context.Context, page int, limit int, customerID *uint) ([]entity.CustomerLog, int64, error)
 }
 
 type customerLogRepository struct {
@@ -42,17 +42,24 @@ func (r *customerLogRepository) List(ctx context.Context) ([]entity.CustomerLog,
 	return data, err
 }
 
-func (r *customerLogRepository) ListPaginated(ctx context.Context, page int, limit int) ([]entity.CustomerLog, int64, error) {
+func (r *customerLogRepository) ListPaginated(ctx context.Context, page int, limit int, customerID *uint) ([]entity.CustomerLog, int64, error) {
 	var data []entity.CustomerLog
 	var total int64
 
 	db := database.ExtractDB(ctx, r.db).Model(&entity.CustomerLog{})
+	if customerID != nil {
+		db = db.Where("customer_id = ?", *customerID)
+	}
 	if err := db.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
 	offset := (page - 1) * limit
-	err := database.ExtractDB(ctx, r.db).
+	query := database.ExtractDB(ctx, r.db)
+	if customerID != nil {
+		query = query.Where("customer_id = ?", *customerID)
+	}
+	err := query.
 		Order("id DESC").
 		Offset(offset).
 		Limit(limit).
