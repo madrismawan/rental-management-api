@@ -22,6 +22,7 @@ type RentalService interface {
 	List(ctx context.Context) ([]entity.Rental, error)
 	ListPaginated(ctx context.Context, page int, limit int) (*RentalListPaginatedResult, error)
 	Update(ctx context.Context, id uint, data UpdateRentalInput) (*entity.Rental, error)
+	Active(ctx context.Context, id uint) (*entity.Rental, error)
 	Cancel(ctx context.Context, id uint) (*entity.Rental, error)
 	Complete(ctx context.Context, id uint, data CompleteRentalInput) (*entity.Rental, error)
 	Delete(ctx context.Context, id uint) error
@@ -255,6 +256,37 @@ func (s *rentalService) Update(ctx context.Context, id uint, data UpdateRentalIn
 		return nil, err
 	}
 	return rental, nil
+}
+
+func (s *rentalService) Active(ctx context.Context, id uint) (*entity.Rental, error) {
+	rental, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	err = s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		ctxTx := database.InjectTx(ctx, tx)
+
+		statusRental := constant.RentalStatusActive
+		rental.Status = statusRental
+		if err := s.repo.Update(ctxTx, rental); err != nil {
+			return err
+		}
+
+		statusVehicle := constant.VehicleStatusRented
+		if _, err := s.vehicleService.Update(ctxTx, rental.VehicleID, UpdateVehicleInput{
+			Status: &statusVehicle,
+		}); err != nil {
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return s.repo.GetByID(ctx, id)
 }
 
 func (s *rentalService) Cancel(ctx context.Context, id uint) (*entity.Rental, error) {

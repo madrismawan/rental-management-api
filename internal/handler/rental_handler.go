@@ -25,6 +25,7 @@ func (h *RentalHandler) Register(rg *gin.RouterGroup) {
 	r.GET("/options", h.GetOptions)
 	r.GET("/:id", h.GetByID)
 	r.PUT("/:id", h.Update)
+	r.PATCH("/:id/active", h.Active)
 	r.PATCH("/:id/cancel", h.Cancel)
 	r.PATCH("/:id/complete", h.Complete)
 	r.DELETE("/:id", h.Delete)
@@ -125,6 +126,22 @@ func (h *RentalHandler) Update(ctx *gin.Context) {
 		return
 	}
 	ctx.JSON(http.StatusOK, resource{Message: "rental updated", Data: mapper.ToRentalResource(*item)})
+}
+
+func (h *RentalHandler) Active(ctx *gin.Context) {
+	id, err := parseID(ctx)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, resource{Message: "invalid id"})
+		return
+	}
+
+	item, err := h.svc.Active(ctx, id)
+	if err != nil {
+		writeError(ctx, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, resource{Message: "rental active", Data: mapper.ToRentalResource(*item)})
 }
 
 func (h *RentalHandler) Cancel(ctx *gin.Context) {
