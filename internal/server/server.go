@@ -48,7 +48,9 @@ func registerRoutes(engine *gin.Engine, cfg config.Config, db *gorm.DB) {
 		gin.SetMode(gin.DebugMode)
 	}
 
-	api := engine.Group("/api/v1")
+	public := engine.Group("/api/v1")
+	protected := engine.Group("/api/v1")
+	protected.Use(AuthMiddleware(cfg.Auth.AccessTokenSecret))
 
 	userRepo := repository.NewUserRepository(db)
 	customerRepo := repository.NewCustomerRepository(db)
@@ -64,10 +66,9 @@ func registerRoutes(engine *gin.Engine, cfg config.Config, db *gorm.DB) {
 	incidentSvc := service.NewVehicleIncidentService(db, incidentRepo, vehicleSvc, rentalRepo)
 	rentalSvc := service.NewRentalService(db, rentalRepo, vehicleSvc, incidentSvc)
 
-	handler.NewAuthHandler(authSvc).RegisterRoutes(api)
-	handler.NewUserHandler(userSvc).Register(api)
-	handler.NewCustomerHandler(customerSvc, storageSvc).Register(api)
-	handler.NewVehicleHandler(vehicleSvc).Register(api)
-	handler.NewRentalHandler(rentalSvc).Register(api)
-	handler.NewVehicleIncidentHandler(incidentSvc).Register(api)
+	handler.NewAuthHandler(authSvc).RegisterRoutes(public)
+	handler.NewCustomerHandler(customerSvc, storageSvc).Register(protected)
+	handler.NewVehicleHandler(vehicleSvc).Register(protected)
+	handler.NewRentalHandler(rentalSvc).Register(protected)
+	handler.NewVehicleIncidentHandler(incidentSvc).Register(protected)
 }

@@ -3,7 +3,6 @@ package service
 import (
 	"errors"
 	"fmt"
-	"rental-management-api/internal/constant"
 	"rental-management-api/internal/dto"
 	"rental-management-api/internal/entity"
 	"rental-management-api/internal/mapper"
@@ -17,7 +16,6 @@ import (
 )
 
 type AuthService interface {
-	Register(c *gin.Context, input dto.RegisterRequest) (entity.User, error)
 	Login(c *gin.Context, email string, password string) (entity.User, dto.AuthTokenResource, error)
 	VerifyToken(c *gin.Context, token string) (entity.User, error)
 }
@@ -41,20 +39,6 @@ func NewAuthService(userService UserService, accessTokenSecret string, refreshTo
 		refreshTokenSecret: []byte(refreshTokenSecret),
 		ttl:                ttl,
 	}
-}
-
-func (s *authService) Register(c *gin.Context, input dto.RegisterRequest) (entity.User, error) {
-	u, err := s.userService.Create(c, CreateUserInput{
-		Name:     input.Name,
-		Email:    input.Email,
-		Role:     constant.UserRoleCustomer,
-		Password: input.Password,
-	})
-	if err != nil {
-		return entity.User{}, err
-	}
-	u.Password = ""
-	return *u, nil
 }
 
 func (s *authService) Login(c *gin.Context, email string, password string) (entity.User, dto.AuthTokenResource, error) {

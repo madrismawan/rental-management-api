@@ -5,30 +5,6 @@ import (
 	"rental-management-api/internal/entity"
 )
 
-func ToUserEntity(req dto.CreateUserRequest) entity.User {
-	return entity.User{
-		Name:     req.Name,
-		Email:    req.Email,
-		Role:     req.Role,
-		Password: req.Password,
-	}
-}
-
-func ApplyUserUpdate(user *entity.User, req dto.UpdateUserRequest) {
-	if req.Name != nil {
-		user.Name = *req.Name
-	}
-	if req.Email != nil {
-		user.Email = *req.Email
-	}
-	if req.Role != nil {
-		user.Role = *req.Role
-	}
-	if req.Password != nil {
-		user.Password = *req.Password
-	}
-}
-
 func ToUserResource(user entity.User) dto.UserResource {
 	return dto.UserResource{
 		ID:        user.ID,
