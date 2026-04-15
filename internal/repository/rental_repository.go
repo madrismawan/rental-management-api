@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"errors"
 
 	"gorm.io/gorm"
 
@@ -11,8 +12,10 @@ import (
 
 type RentalRepository interface {
 	Create(ctx context.Context, data *entity.Rental) error
+	GetLatestNoInvoice(ctx context.Context) (string, error)
 	GetByID(ctx context.Context, id uint) (*entity.Rental, error)
 	GetByColumn(ctx context.Context, column string, value any) (entity.Rental, error)
+	GetOptions(ctx context.Context) ([]entity.Rental, error)
 	List(ctx context.Context) ([]entity.Rental, error)
 	ListPaginated(ctx context.Context, page int, limit int) ([]entity.Rental, int64, error)
 	Update(ctx context.Context, data *entity.Rental) error
@@ -29,6 +32,21 @@ func NewRentalRepository(db *gorm.DB) RentalRepository {
 
 func (r *rentalRepository) Create(ctx context.Context, data *entity.Rental) error {
 	return database.ExtractDB(ctx, r.db).Create(data).Error
+}
+
+func (r *rentalRepository) GetLatestNoInvoice(ctx context.Context) (string, error) {
+	var data entity.Rental
+	err := database.ExtractDB(ctx, r.db).
+		Select("no_invoice").
+		Order("no_invoice DESC").
+		First(&data).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return "", nil
+		}
+		return "", err
+	}
+	return data.NoInvoice, nil
 }
 
 func (r *rentalRepository) GetByID(ctx context.Context, id uint) (*entity.Rental, error) {
@@ -54,6 +72,18 @@ func (r *rentalRepository) GetByColumn(ctx context.Context, column string, value
 		return entity.Rental{}, err
 	}
 	return data, nil
+}
+
+func (r *rentalRepository) GetOptions(ctx context.Context) ([]entity.Rental, error) {
+	var data []entity.Rental
+	err := database.ExtractDB(ctx, r.db).
+		Select("id", "vehicle_id").
+		Preload("Vehicle", func(db *gorm.DB) *gorm.DB {
+			return db.Select("id", "plate_number")
+		}).
+		Order("id DESC").
+		Find(&data).Error
+	return data, err
 }
 
 func (r *rentalRepository) List(ctx context.Context) ([]entity.Rental, error) {

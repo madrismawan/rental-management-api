@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"time"
 
 	"rental-management-api/internal/constant"
@@ -17,10 +18,12 @@ type RentalService interface {
 	Create(ctx context.Context, data CreateRentalInput) (*entity.Rental, error)
 	GetByID(ctx context.Context, id uint) (*entity.Rental, error)
 	GetByColumn(ctx context.Context, column string, value any) (entity.Rental, error)
+	GetOptions(ctx context.Context) ([]entity.Rental, error)
 	List(ctx context.Context) ([]entity.Rental, error)
 	ListPaginated(ctx context.Context, page int, limit int) (*RentalListPaginatedResult, error)
 	Update(ctx context.Context, id uint, data UpdateRentalInput) (*entity.Rental, error)
 	Cancel(ctx context.Context, id uint) (*entity.Rental, error)
+	Complete(ctx context.Context, id uint, data CompleteRentalInput) (*entity.Rental, error)
 	Delete(ctx context.Context, id uint) error
 }
 
@@ -38,7 +41,7 @@ type CreateRentalInput struct {
 	StartDate             time.Time
 	EndDate               time.Time
 	Notes                 string
-	VehicleConditionStart string
+	VehicleConditionStart constant.VehicleCondition
 	MileageStart          int
 }
 
@@ -54,21 +57,31 @@ type UpdateRentalInput struct {
 	Subtotal              *int64
 	Notes                 *string
 	Status                *constant.RentalStatus
-	VehicleConditionStart *string
-	VehicleConditionEnd   *string
+	VehicleConditionStart *constant.VehicleCondition
+	VehicleConditionEnd   *constant.VehicleCondition
 	MileageStart          *int
 	MileageUsed           *int
 	MileageEnd            *int
 }
 
-type rentalService struct {
-	db             *gorm.DB
-	vehicleService VehicleService
-	repo           repository.RentalRepository
+type CompleteRentalInput struct {
+	ReturnDate          time.Time
+	PenaltyFee          int64
+	IncidentType        string
+	Description         string
+	VehicleConditionEnd constant.VehicleCondition
+	MileageEnd          int
 }
 
-func NewRentalService(db *gorm.DB, repo repository.RentalRepository, vehicleService VehicleService) RentalService {
-	return &rentalService{db: db, repo: repo, vehicleService: vehicleService}
+type rentalService struct {
+	db                     *gorm.DB
+	vehicleService         VehicleService
+	vehicleIncidentService VehicleIncidentService
+	repo                   repository.RentalRepository
+}
+
+func NewRentalService(db *gorm.DB, repo repository.RentalRepository, vehicleService VehicleService, vehicleIncidentService VehicleIncidentService) RentalService {
+	return &rentalService{db: db, repo: repo, vehicleService: vehicleService, vehicleIncidentService: vehicleIncidentService}
 }
 
 func (s *rentalService) Create(ctx context.Context, data CreateRentalInput) (*entity.Rental, error) {
@@ -92,7 +105,13 @@ func (s *rentalService) Create(ctx context.Context, data CreateRentalInput) (*en
 	var rental entity.Rental
 	err = s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		ctxTx := database.InjectTx(ctx, tx)
+		noInvoice, err := GenerateInvoiceNumber()
+		if err != nil {
+			return err
+		}
+
 		rental = entity.Rental{
+			NoInvoice:             noInvoice,
 			CustomerID:            data.CustomerID,
 			VehicleID:             data.VehicleID,
 			StartDate:             data.StartDate,
@@ -121,8 +140,18 @@ func (s *rentalService) Create(ctx context.Context, data CreateRentalInput) (*en
 		}
 		return nil
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	return &rental, nil
+}
+
+func GenerateInvoiceNumber() (string, error) {
+	rand.New(rand.NewSource(time.Now().UnixNano()))
+	suffix := rand.Intn(9000) + 1000
+
+	return fmt.Sprintf("INV%s-%d", time.Now().Format("20060102"), suffix), nil
 }
 
 func (s *rentalService) GetByID(ctx context.Context, id uint) (*entity.Rental, error) {
@@ -131,6 +160,10 @@ func (s *rentalService) GetByID(ctx context.Context, id uint) (*entity.Rental, e
 
 func (s *rentalService) GetByColumn(ctx context.Context, column string, value any) (entity.Rental, error) {
 	return s.repo.GetByColumn(ctx, column, value)
+}
+
+func (s *rentalService) GetOptions(ctx context.Context) ([]entity.Rental, error) {
+	return s.repo.GetOptions(ctx)
 }
 
 func (s *rentalService) List(ctx context.Context) ([]entity.Rental, error) {
@@ -232,6 +265,64 @@ func (s *rentalService) Cancel(ctx context.Context, id uint) (*entity.Rental, er
 
 	rental.Status = constant.RentalStatusCancelled
 	if err := s.repo.Update(ctx, rental); err != nil {
+		return nil, err
+	}
+
+	return rental, nil
+}
+
+func (s *rentalService) Complete(ctx context.Context, id uint, data CompleteRentalInput) (*entity.Rental, error) {
+	rental, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	err = s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		ctxTx := database.InjectTx(ctx, tx)
+		penaltyFee := rental.PenaltyFee + data.PenaltyFee
+		subtotal := rental.Subtotal + data.PenaltyFee
+		status := constant.RentalStatusCompleted
+		mileageUsed := data.MileageEnd - rental.MileageStart
+		rental, err = s.Update(ctxTx, id, UpdateRentalInput{
+			ReturnDate:          &data.ReturnDate,
+			PenaltyFee:          &penaltyFee,
+			Subtotal:            &subtotal,
+			Status:              &status,
+			VehicleConditionEnd: &data.VehicleConditionEnd,
+			MileageUsed:         &mileageUsed,
+			MileageEnd:          &data.MileageEnd,
+		})
+
+		statusVehicle := constant.VehicleStatusAvailable
+		if data.IncidentType != "" {
+			_, err := s.vehicleIncidentService.Create(ctxTx, CreateVehicleIncidentInput{
+				VehicleID:    rental.VehicleID,
+				CustomerID:   &rental.CustomerID,
+				RentalID:     &rental.ID,
+				IncidentDate: data.ReturnDate,
+				IncidentType: constant.IncidentType(data.IncidentType),
+				Description:  data.Description,
+				Cost:         data.PenaltyFee,
+				Status:       constant.VehicleIncidentStatusOpen,
+			})
+			if err != nil {
+				return err
+			}
+			statusVehicle = constant.VehicleStatusUnavailable
+		}
+
+		s.vehicleService.Update(ctxTx, rental.VehicleID, UpdateVehicleInput{
+			Mileage:   &data.MileageEnd,
+			Condition: &data.VehicleConditionEnd,
+			Status:    &statusVehicle,
+		})
+
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
 		return nil, err
 	}
 

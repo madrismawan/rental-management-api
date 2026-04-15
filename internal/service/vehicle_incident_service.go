@@ -36,7 +36,7 @@ type CreateVehicleIncidentInput struct {
 	IncidentDate time.Time
 	IncidentType constant.IncidentType
 	Description  string
-	PenaltyFee   int64
+	Cost         int64
 	Status       constant.VehicleIncidentStatus
 }
 
@@ -47,7 +47,7 @@ type UpdateVehicleIncidentInput struct {
 	IncidentDate *time.Time
 	IncidentType *constant.IncidentType
 	Description  *string
-	PenaltyFee   *int64
+	Cost         *int64
 	Status       *constant.VehicleIncidentStatus
 }
 
@@ -68,7 +68,7 @@ func (s *vehicleIncidentService) Create(ctx context.Context, data CreateVehicleI
 		IncidentDate: data.IncidentDate,
 		IncidentType: data.IncidentType,
 		Description:  data.Description,
-		PenaltyFee:   data.PenaltyFee,
+		Cost:         data.Cost,
 		Status:       data.Status,
 	}
 	if err := s.repo.Create(ctx, &incident); err != nil {
@@ -139,8 +139,8 @@ func (s *vehicleIncidentService) Update(ctx context.Context, id uint, data Updat
 	if data.Description != nil {
 		incident.Description = *data.Description
 	}
-	if data.PenaltyFee != nil {
-		incident.PenaltyFee = *data.PenaltyFee
+	if data.Cost != nil {
+		incident.Cost = *data.Cost
 	}
 	if data.Status != nil {
 		incident.Status = *data.Status

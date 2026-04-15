@@ -40,7 +40,7 @@ func (h *VehicleIncidentHandler) Create(ctx *gin.Context) {
 		IncidentDate: req.IncidentDate,
 		IncidentType: req.IncidentType,
 		Description:  req.Description,
-		PenaltyFee:   req.PenaltyFee,
+		Cost:         req.Cost,
 		Status:       req.Status,
 	})
 	if err != nil {
@@ -97,7 +97,7 @@ func (h *VehicleIncidentHandler) Update(ctx *gin.Context) {
 		IncidentDate: req.IncidentDate,
 		IncidentType: req.IncidentType,
 		Description:  req.Description,
-		PenaltyFee:   req.PenaltyFee,
+		Cost:         req.Cost,
 		Status:       req.Status,
 	})
 	if err != nil {

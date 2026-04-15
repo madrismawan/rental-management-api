@@ -44,16 +44,11 @@ func NewAuthService(userService UserService, accessTokenSecret string, refreshTo
 }
 
 func (s *authService) Register(c *gin.Context, input dto.RegisterRequest) (entity.User, error) {
-	hashedPassword, err := HashPassword(input.Password)
-	if err != nil {
-		return entity.User{}, fmt.Errorf("hash password: %w", err)
-	}
-
 	u, err := s.userService.Create(c, CreateUserInput{
 		Name:     input.Name,
 		Email:    input.Email,
 		Role:     constant.UserRoleCustomer,
-		Password: hashedPassword,
+		Password: input.Password,
 	})
 	if err != nil {
 		return entity.User{}, err

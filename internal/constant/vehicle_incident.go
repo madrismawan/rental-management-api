@@ -4,8 +4,10 @@ type VehicleIncidentStatus string
 type IncidentType string
 
 const (
-	VehicleIncidentStatusOpen   VehicleIncidentStatus = "open"
-	VehicleIncidentStatusClosed VehicleIncidentStatus = "closed"
+	VehicleIncidentStatusOpen       VehicleIncidentStatus = "open"
+	VehicleIncidentStatusInProgress VehicleIncidentStatus = "in_progress"
+	VehicleIncidentStatusResolved   VehicleIncidentStatus = "resolved"
+	VehicleIncidentStatusClosed     VehicleIncidentStatus = "closed"
 )
 
 const (

@@ -13,7 +13,7 @@ func ToVehicleIncidentEntity(req dto.CreateVehicleIncidentRequest) entity.Vehicl
 		IncidentDate: req.IncidentDate,
 		IncidentType: req.IncidentType,
 		Description:  req.Description,
-		PenaltyFee:   req.PenaltyFee,
+		Cost:         req.Cost,
 		Status:       req.Status,
 	}
 }
@@ -37,8 +37,8 @@ func ApplyVehicleIncidentUpdate(incident *entity.VehicleIncident, req dto.Update
 	if req.Description != nil {
 		incident.Description = *req.Description
 	}
-	if req.PenaltyFee != nil {
-		incident.PenaltyFee = *req.PenaltyFee
+	if req.Cost != nil {
+		incident.Cost = *req.Cost
 	}
 	if req.Status != nil {
 		incident.Status = *req.Status
@@ -54,7 +54,7 @@ func ToVehicleIncidentResource(incident entity.VehicleIncident) dto.VehicleIncid
 		IncidentDate: incident.IncidentDate,
 		IncidentType: incident.IncidentType,
 		Description:  incident.Description,
-		PenaltyFee:   incident.PenaltyFee,
+		Cost:         incident.Cost,
 		Status:       incident.Status,
 		CreatedAt:    incident.CreatedAt,
 		UpdatedAt:    incident.UpdatedAt,

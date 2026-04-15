@@ -22,9 +22,11 @@ func (h *RentalHandler) Register(rg *gin.RouterGroup) {
 	r := rg.Group("/rentals")
 	r.POST("", h.Create)
 	r.GET("", h.List)
+	r.GET("/options", h.GetOptions)
 	r.GET("/:id", h.GetByID)
 	r.PUT("/:id", h.Update)
 	r.PATCH("/:id/cancel", h.Cancel)
+	r.PATCH("/:id/complete", h.Complete)
 	r.DELETE("/:id", h.Delete)
 }
 
@@ -79,6 +81,16 @@ func (h *RentalHandler) GetByID(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, resource{Message: "ok", Data: mapper.ToRentalResource(*item)})
 }
 
+func (h *RentalHandler) GetOptions(ctx *gin.Context) {
+	items, err := h.svc.GetOptions(ctx)
+	if err != nil {
+		writeError(ctx, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, resource{Message: "ok", Data: mapper.ToRentalOptionsResource(items)})
+}
+
 func (h *RentalHandler) Update(ctx *gin.Context) {
 	id, err := parseID(ctx)
 	if err != nil {
@@ -129,6 +141,36 @@ func (h *RentalHandler) Cancel(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, resource{Message: "rental canceled", Data: mapper.ToRentalResource(*item)})
+}
+
+func (h *RentalHandler) Complete(ctx *gin.Context) {
+	id, err := parseID(ctx)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, resource{Message: "invalid id"})
+		return
+	}
+
+	var req dto.CompleteRentalRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, resource{Message: err.Error()})
+		return
+	}
+
+	item, err := h.svc.Complete(ctx, id, service.CompleteRentalInput{
+		ReturnDate:          req.ReturnDate,
+		PenaltyFee:          req.PenaltyFee,
+		IncidentType:        req.IncidentType,
+		Description:         req.Description,
+		VehicleConditionEnd: req.VehicleConditionEnd,
+		MileageEnd:          req.MileageEnd,
+	})
+
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, resource{Message: "invalid id"})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, resource{Message: "rental completed", Data: mapper.ToRentalResource(*item)})
 }
 
 func (h *RentalHandler) Delete(ctx *gin.Context) {

@@ -268,8 +268,10 @@ func SeedRentals(db *gorm.DB) error {
 		price := vehicle.DailyRate
 		penaltyFee := int64(0)
 		subtotal := price*int64(totalDay) + penaltyFee
+		noInvoice := fmt.Sprintf("INV%s-%04d", time.Now().Format("20060102"), count+int64(i)+1)
 
 		rentals = append(rentals, entity.Rental{
+			NoInvoice:             noInvoice,
 			CustomerID:            customer.ID,
 			VehicleID:             vehicle.ID,
 			StartDate:             startDate,
@@ -358,7 +360,7 @@ func SeedVehicleIncidents(db *gorm.DB) error {
 			IncidentDate: time.Now().AddDate(0, 0, -rng.Intn(90)),
 			IncidentType: incidentType,
 			Description:  description,
-			PenaltyFee:   penalty,
+			Cost:         penalty,
 			Status:       status,
 		})
 	}
