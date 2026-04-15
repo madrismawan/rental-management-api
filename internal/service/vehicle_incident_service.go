@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"rental-management-api/internal/constant"
+	"rental-management-api/internal/database"
 	"rental-management-api/internal/entity"
 	"rental-management-api/internal/repository"
 
@@ -18,6 +19,9 @@ type VehicleIncidentService interface {
 	List(ctx context.Context) ([]entity.VehicleIncident, error)
 	ListPaginated(ctx context.Context, page int, limit int) (*VehicleIncidentListPaginatedResult, error)
 	Update(ctx context.Context, id uint, data UpdateVehicleIncidentInput) (*entity.VehicleIncident, error)
+	Progress(ctx context.Context, id uint) (*entity.VehicleIncident, error)
+	Closed(ctx context.Context, id uint) (*entity.VehicleIncident, error)
+	Resolved(ctx context.Context, id uint) (*entity.VehicleIncident, error)
 	Delete(ctx context.Context, id uint) error
 }
 
@@ -52,24 +56,35 @@ type UpdateVehicleIncidentInput struct {
 }
 
 type vehicleIncidentService struct {
-	db   *gorm.DB
-	repo repository.VehicleIncidentRepository
+	db             *gorm.DB
+	vehicleService VehicleService
+	rentalRepo     repository.RentalRepository
+	repo           repository.VehicleIncidentRepository
 }
 
-func NewVehicleIncidentService(db *gorm.DB, repo repository.VehicleIncidentRepository) VehicleIncidentService {
-	return &vehicleIncidentService{db: db, repo: repo}
+func NewVehicleIncidentService(db *gorm.DB, repo repository.VehicleIncidentRepository, vehicleService VehicleService, rentalRepo repository.RentalRepository) VehicleIncidentService {
+	return &vehicleIncidentService{db: db, repo: repo, vehicleService: vehicleService, rentalRepo: rentalRepo}
 }
 
 func (s *vehicleIncidentService) Create(ctx context.Context, data CreateVehicleIncidentInput) (*entity.VehicleIncident, error) {
+	customerID := data.CustomerID
+	if data.RentalID != nil {
+		rental, err := s.rentalRepo.GetByID(ctx, *data.RentalID)
+		if err != nil {
+			return nil, err
+		}
+		customerID = &rental.CustomerID
+	}
+
 	incident := entity.VehicleIncident{
 		VehicleID:    data.VehicleID,
-		CustomerID:   data.CustomerID,
+		CustomerID:   customerID,
 		RentalID:     data.RentalID,
 		IncidentDate: data.IncidentDate,
 		IncidentType: data.IncidentType,
 		Description:  data.Description,
 		Cost:         data.Cost,
-		Status:       data.Status,
+		Status:       constant.VehicleIncidentStatusOpen,
 	}
 	if err := s.repo.Create(ctx, &incident); err != nil {
 		return nil, err
@@ -150,6 +165,85 @@ func (s *vehicleIncidentService) Update(ctx context.Context, id uint, data Updat
 		return nil, err
 	}
 	return incident, nil
+}
+
+func (s *vehicleIncidentService) Progress(ctx context.Context, id uint) (*entity.VehicleIncident, error) {
+	incident, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	err = s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		ctxTx := database.InjectTx(ctx, tx)
+
+		statusIncident := constant.VehicleIncidentStatusInProgress
+		if _, err := s.Update(ctxTx, id, UpdateVehicleIncidentInput{
+			Status: &statusIncident,
+		}); err != nil {
+			return err
+		}
+
+		statusVehicle := constant.VehicleStatusMaintenance
+		if _, err := s.vehicleService.Update(ctxTx, incident.VehicleID, UpdateVehicleInput{
+			Status: &statusVehicle,
+		}); err != nil {
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return s.repo.GetByID(ctx, id)
+}
+
+func (s *vehicleIncidentService) Closed(ctx context.Context, id uint) (*entity.VehicleIncident, error) {
+	incident, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	statusIncident := constant.VehicleIncidentStatusClosed
+	incident.Status = statusIncident
+	if err := s.repo.Update(ctx, incident); err != nil {
+		return nil, err
+	}
+
+	return s.repo.GetByID(ctx, id)
+}
+
+func (s *vehicleIncidentService) Resolved(ctx context.Context, id uint) (*entity.VehicleIncident, error) {
+	incident, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	err = s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		ctxTx := database.InjectTx(ctx, tx)
+
+		statusIncident := constant.VehicleIncidentStatusResolved
+		if _, err := s.Update(ctxTx, id, UpdateVehicleIncidentInput{
+			Status: &statusIncident,
+		}); err != nil {
+			return err
+		}
+
+		statusVehicle := constant.VehicleStatusAvailable
+		if _, err := s.vehicleService.Update(ctxTx, incident.VehicleID, UpdateVehicleInput{
+			Status: &statusVehicle,
+		}); err != nil {
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return s.repo.GetByID(ctx, id)
 }
 
 func (s *vehicleIncidentService) Delete(ctx context.Context, id uint) error {

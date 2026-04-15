@@ -1,54 +1,16 @@
 package mapper
 
 import (
+	"fmt"
 	"rental-management-api/internal/dto"
 	"rental-management-api/internal/entity"
 )
-
-func ToVehicleIncidentEntity(req dto.CreateVehicleIncidentRequest) entity.VehicleIncident {
-	return entity.VehicleIncident{
-		VehicleID:    req.VehicleID,
-		CustomerID:   req.CustomerID,
-		RentalID:     req.RentalID,
-		IncidentDate: req.IncidentDate,
-		IncidentType: req.IncidentType,
-		Description:  req.Description,
-		Cost:         req.Cost,
-		Status:       req.Status,
-	}
-}
-
-func ApplyVehicleIncidentUpdate(incident *entity.VehicleIncident, req dto.UpdateVehicleIncidentRequest) {
-	if req.VehicleID != nil {
-		incident.VehicleID = *req.VehicleID
-	}
-	if req.CustomerID != nil {
-		incident.CustomerID = req.CustomerID
-	}
-	if req.RentalID != nil {
-		incident.RentalID = req.RentalID
-	}
-	if req.IncidentDate != nil {
-		incident.IncidentDate = *req.IncidentDate
-	}
-	if req.IncidentType != nil {
-		incident.IncidentType = *req.IncidentType
-	}
-	if req.Description != nil {
-		incident.Description = *req.Description
-	}
-	if req.Cost != nil {
-		incident.Cost = *req.Cost
-	}
-	if req.Status != nil {
-		incident.Status = *req.Status
-	}
-}
 
 func ToVehicleIncidentResource(incident entity.VehicleIncident) dto.VehicleIncidentResource {
 	return dto.VehicleIncidentResource{
 		ID:           incident.ID,
 		VehicleID:    incident.VehicleID,
+		VehicleName:  fmt.Sprintf("%s %s (%s)", incident.Vehicle.Brand, incident.Vehicle.Model, incident.Vehicle.PlateNumber),
 		CustomerID:   incident.CustomerID,
 		RentalID:     incident.RentalID,
 		IncidentDate: incident.IncidentDate,

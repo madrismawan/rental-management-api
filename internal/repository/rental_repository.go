@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"errors"
 
 	"gorm.io/gorm"
 
@@ -12,7 +11,6 @@ import (
 
 type RentalRepository interface {
 	Create(ctx context.Context, data *entity.Rental) error
-	GetLatestNoInvoice(ctx context.Context) (string, error)
 	GetByID(ctx context.Context, id uint) (*entity.Rental, error)
 	GetByColumn(ctx context.Context, column string, value any) (entity.Rental, error)
 	GetOptions(ctx context.Context) ([]entity.Rental, error)
@@ -32,21 +30,6 @@ func NewRentalRepository(db *gorm.DB) RentalRepository {
 
 func (r *rentalRepository) Create(ctx context.Context, data *entity.Rental) error {
 	return database.ExtractDB(ctx, r.db).Create(data).Error
-}
-
-func (r *rentalRepository) GetLatestNoInvoice(ctx context.Context) (string, error) {
-	var data entity.Rental
-	err := database.ExtractDB(ctx, r.db).
-		Select("no_invoice").
-		Order("no_invoice DESC").
-		First(&data).Error
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return "", nil
-		}
-		return "", err
-	}
-	return data.NoInvoice, nil
 }
 
 func (r *rentalRepository) GetByID(ctx context.Context, id uint) (*entity.Rental, error) {
@@ -77,9 +60,15 @@ func (r *rentalRepository) GetByColumn(ctx context.Context, column string, value
 func (r *rentalRepository) GetOptions(ctx context.Context) ([]entity.Rental, error) {
 	var data []entity.Rental
 	err := database.ExtractDB(ctx, r.db).
-		Select("id", "vehicle_id").
+		Select("id", "vehicle_id", "customer_id", "no_invoice").
 		Preload("Vehicle", func(db *gorm.DB) *gorm.DB {
-			return db.Select("id", "plate_number")
+			return db.Select("id", "brand", "model", "plate_number")
+		}).
+		Preload("Customer", func(db *gorm.DB) *gorm.DB {
+			return db.Select("id", "user_id")
+		}).
+		Preload("Customer.User", func(db *gorm.DB) *gorm.DB {
+			return db.Select("id", "name")
 		}).
 		Order("id DESC").
 		Find(&data).Error

@@ -93,9 +93,14 @@ func ToRentalsResource(rentals []entity.Rental) []dto.RentalResource {
 }
 
 func ToRentalOptionResource(rental entity.Rental) dto.RentalOptionResource {
+	label := fmt.Sprintf("%s - %s", rental.Vehicle.PlateNumber, rental.NoInvoice)
+	if rental.Customer.User.Name != "" {
+		label = fmt.Sprintf("%s - %s - %s", rental.NoInvoice, rental.Customer.User.Name, rental.Vehicle.PlateNumber)
+	}
+
 	return dto.RentalOptionResource{
 		ID:   rental.ID,
-		Name: fmt.Sprintf("%s - %s", rental.Vehicle.PlateNumber, rental.NoInvoice),
+		Name: label,
 	}
 }
 

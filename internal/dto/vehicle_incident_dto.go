@@ -7,14 +7,13 @@ import (
 )
 
 type CreateVehicleIncidentRequest struct {
-	VehicleID    uint                           `json:"vehicle_id" binding:"required"`
-	CustomerID   *uint                          `json:"customer_id"`
-	RentalID     *uint                          `json:"rental_id"`
-	IncidentDate time.Time                      `json:"incident_date" binding:"required"`
-	IncidentType constant.IncidentType          `json:"incident_type" binding:"required"`
-	Description  string                         `json:"description"`
-	Cost         int64                          `json:"cost"`
-	Status       constant.VehicleIncidentStatus `json:"status" binding:"required"`
+	VehicleID    uint                  `json:"vehicle_id" binding:"required"`
+	CustomerID   *uint                 `json:"customer_id"`
+	RentalID     *uint                 `json:"rental_id"`
+	IncidentDate time.Time             `json:"incident_date" binding:"required"`
+	IncidentType constant.IncidentType `json:"incident_type" binding:"required"`
+	Description  string                `json:"description"`
+	Cost         int64                 `json:"cost"`
 }
 
 type UpdateVehicleIncidentRequest struct {
@@ -31,6 +30,7 @@ type UpdateVehicleIncidentRequest struct {
 type VehicleIncidentResource struct {
 	ID           uint                           `json:"id"`
 	VehicleID    uint                           `json:"vehicle_id"`
+	VehicleName  string                         `json:"vehicle_name"`
 	CustomerID   *uint                          `json:"customer_id"`
 	RentalID     *uint                          `json:"rental_id"`
 	IncidentDate time.Time                      `json:"incident_date"`

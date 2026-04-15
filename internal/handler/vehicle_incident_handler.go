@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"rental-management-api/internal/constant"
 	"rental-management-api/internal/dto"
 	"rental-management-api/internal/mapper"
 	"rental-management-api/internal/service"
@@ -23,6 +24,9 @@ func (h *VehicleIncidentHandler) Register(rg *gin.RouterGroup) {
 	r.POST("", h.Create)
 	r.GET("", h.List)
 	r.GET("/:id", h.GetByID)
+	r.PATCH("/:id/progress", h.Progress)
+	r.PATCH("/:id/closed", h.Closed)
+	r.PATCH("/:id/resolved", h.Resolved)
 	r.PUT("/:id", h.Update)
 	r.DELETE("/:id", h.Delete)
 }
@@ -40,8 +44,8 @@ func (h *VehicleIncidentHandler) Create(ctx *gin.Context) {
 		IncidentDate: req.IncidentDate,
 		IncidentType: req.IncidentType,
 		Description:  req.Description,
+		Status:       constant.VehicleIncidentStatusOpen,
 		Cost:         req.Cost,
-		Status:       req.Status,
 	})
 	if err != nil {
 		writeError(ctx, err)
@@ -79,6 +83,54 @@ func (h *VehicleIncidentHandler) GetByID(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, resource{Message: "ok", Data: mapper.ToVehicleIncidentResource(*item)})
 }
 
+func (h *VehicleIncidentHandler) Progress(ctx *gin.Context) {
+	id, err := parseID(ctx)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, resource{Message: "invalid id"})
+		return
+	}
+
+	item, err := h.svc.Progress(ctx, id)
+	if err != nil {
+		writeError(ctx, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, resource{Message: "vehicle incident in progress", Data: mapper.ToVehicleIncidentResource(*item)})
+}
+
+func (h *VehicleIncidentHandler) Closed(ctx *gin.Context) {
+	id, err := parseID(ctx)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, resource{Message: "invalid id"})
+		return
+	}
+
+	item, err := h.svc.Closed(ctx, id)
+	if err != nil {
+		writeError(ctx, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, resource{Message: "vehicle incident closed", Data: mapper.ToVehicleIncidentResource(*item)})
+}
+
+func (h *VehicleIncidentHandler) Resolved(ctx *gin.Context) {
+	id, err := parseID(ctx)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, resource{Message: "invalid id"})
+		return
+	}
+
+	item, err := h.svc.Resolved(ctx, id)
+	if err != nil {
+		writeError(ctx, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, resource{Message: "vehicle incident resolved", Data: mapper.ToVehicleIncidentResource(*item)})
+}
+
 func (h *VehicleIncidentHandler) Update(ctx *gin.Context) {
 	id, err := parseID(ctx)
 	if err != nil {
@@ -98,7 +150,6 @@ func (h *VehicleIncidentHandler) Update(ctx *gin.Context) {
 		IncidentType: req.IncidentType,
 		Description:  req.Description,
 		Cost:         req.Cost,
-		Status:       req.Status,
 	})
 	if err != nil {
 		writeError(ctx, err)
