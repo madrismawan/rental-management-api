@@ -32,7 +32,9 @@ type VehicleIncidentResource struct {
 	VehicleID    uint                           `json:"vehicle_id"`
 	VehicleName  string                         `json:"vehicle_name"`
 	CustomerID   *uint                          `json:"customer_id"`
+	CustomerName string                         `json:"customer_name"`
 	RentalID     *uint                          `json:"rental_id"`
+	RentalNoInvoice string                      `json:"rental_no_invoice"`
 	IncidentDate time.Time                      `json:"incident_date"`
 	IncidentType constant.IncidentType          `json:"incident_type"`
 	Description  string                         `json:"description"`

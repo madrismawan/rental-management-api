@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"rental-management-api/internal/constant"
 	"rental-management-api/internal/dto"
 	"rental-management-api/internal/mapper"
 	"rental-management-api/internal/service"
@@ -93,7 +94,13 @@ func (h *CustomerHandler) GetByID(ctx *gin.Context) {
 }
 
 func (h *CustomerHandler) GetOptions(ctx *gin.Context) {
-	items, err := h.svc.GetOptions(ctx)
+	var status *constant.CustomerStatus
+	if rawStatus := ctx.Query("status"); rawStatus != "" {
+		parsedStatus := constant.CustomerStatus(rawStatus)
+		status = &parsedStatus
+	}
+
+	items, err := h.svc.GetOptions(ctx, status)
 	if err != nil {
 		writeError(ctx, err)
 		return

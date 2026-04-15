@@ -20,6 +20,7 @@ const (
 	defaultSeedAdminPassword    = "admin123"
 	defaultSeedCustomerPassword = "customer123"
 	seedCustomerTarget          = 10
+	seedCustomerLogTarget       = 20
 	seedVehicleTarget           = 100
 	seedRentalTarget            = 10
 	seedIncidentTarget          = 15
@@ -31,6 +32,9 @@ func SeedAll(db *gorm.DB) error {
 	}
 	if err := SeedCustomers(db); err != nil {
 		return fmt.Errorf("seed customers: %w", err)
+	}
+	if err := SeedCustomerLogs(db); err != nil {
+		return fmt.Errorf("seed customer logs: %w", err)
 	}
 	if err := SeedVehicles(db); err != nil {
 		return fmt.Errorf("seed vehicles: %w", err)
@@ -139,6 +143,63 @@ func SeedAdminUser(db *gorm.DB) error {
 		if updateErr := db.Model(&user).Update("role", constant.UserRoleAdmin).Error; updateErr != nil {
 			return fmt.Errorf("update admin role: %w", updateErr)
 		}
+	}
+
+	return nil
+}
+
+func SeedCustomerLogs(db *gorm.DB) error {
+	var count int64
+	if err := db.Model(&entity.CustomerLog{}).Count(&count).Error; err != nil {
+		return fmt.Errorf("count customer logs: %w", err)
+	}
+
+	if count >= seedCustomerLogTarget {
+		return nil
+	}
+
+	var customers []entity.Customer
+	if err := db.Preload("User").Select("id", "user_id", "status").Find(&customers).Error; err != nil {
+		return fmt.Errorf("query customers for logs: %w", err)
+	}
+	if len(customers) == 0 {
+		return fmt.Errorf("cannot seed customer logs: no customers found")
+	}
+
+	reasons := []string{
+		"Status synchronized by seeder",
+		"Customer profile verified",
+		"Manual audit seed entry",
+		"Data normalization seed log",
+		"Initial status registration",
+	}
+	statuses := []constant.CustomerLogStatus{
+		constant.CustomerLogStatusActive,
+		constant.CustomerLogStatusInactive,
+		constant.CustomerLogStatusBanned,
+	}
+
+	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
+	toCreate := seedCustomerLogTarget - int(count)
+	logs := make([]entity.CustomerLog, 0, toCreate)
+
+	for i := 0; i < toCreate; i++ {
+		customer := customers[rng.Intn(len(customers))]
+		customerName := customer.User.Name
+		if customerName == "" {
+			customerName = fmt.Sprintf("Customer #%d", customer.ID)
+		}
+
+		logs = append(logs, entity.CustomerLog{
+			CustomerID:   customer.ID,
+			CustomerName: customerName,
+			Reason:       reasons[rng.Intn(len(reasons))],
+			Status:       statuses[rng.Intn(len(statuses))],
+		})
+	}
+
+	if err := db.Create(&logs).Error; err != nil {
+		return fmt.Errorf("create customer logs: %w", err)
 	}
 
 	return nil

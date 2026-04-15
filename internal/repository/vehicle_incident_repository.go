@@ -35,7 +35,7 @@ func (r *vehicleIncidentRepository) GetByID(ctx context.Context, id uint) (*enti
 	var data entity.VehicleIncident
 	err := database.ExtractDB(ctx, r.db).
 		Preload("Vehicle").
-		Preload("Customer").
+		Preload("Customer.User").
 		Preload("Rental").
 		First(&data, id).Error
 	if err != nil {
@@ -48,7 +48,7 @@ func (r *vehicleIncidentRepository) GetByColumn(ctx context.Context, column stri
 	var data entity.VehicleIncident
 	err := database.ExtractDB(ctx, r.db).
 		Preload("Vehicle").
-		Preload("Customer").
+		Preload("Customer.User").
 		Preload("Rental").
 		Where(column+" = ?", value).
 		First(&data).Error
@@ -62,7 +62,7 @@ func (r *vehicleIncidentRepository) List(ctx context.Context) ([]entity.VehicleI
 	var data []entity.VehicleIncident
 	err := database.ExtractDB(ctx, r.db).
 		Preload("Vehicle").
-		Preload("Customer").
+		Preload("Customer.User").
 		Preload("Rental").
 		Find(&data).Error
 	return data, err
@@ -80,7 +80,7 @@ func (r *vehicleIncidentRepository) ListPaginated(ctx context.Context, page int,
 	offset := (page - 1) * limit
 	err := database.ExtractDB(ctx, r.db).
 		Preload("Vehicle").
-		Preload("Customer").
+		Preload("Customer.User").
 		Preload("Rental").
 		Order("id DESC").
 		Offset(offset).

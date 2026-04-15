@@ -5,6 +5,7 @@ import (
 
 	"gorm.io/gorm"
 
+	"rental-management-api/internal/constant"
 	"rental-management-api/internal/database"
 	"rental-management-api/internal/entity"
 )
@@ -13,7 +14,7 @@ type CustomerRepository interface {
 	Create(ctx context.Context, data *entity.Customer) error
 	GetByID(ctx context.Context, id uint) (*entity.Customer, error)
 	GetByColumn(ctx context.Context, column string, value any) (entity.Customer, error)
-	GetOptions(ctx context.Context) ([]entity.Customer, error)
+	GetOptions(ctx context.Context, status *constant.CustomerStatus) ([]entity.Customer, error)
 	List(ctx context.Context) ([]entity.Customer, error)
 	ListPaginated(ctx context.Context, page int, limit int) ([]entity.Customer, int64, error)
 	Update(ctx context.Context, data *entity.Customer) error
@@ -48,15 +49,18 @@ func (r *customerRepository) GetByColumn(ctx context.Context, column string, val
 	return data, nil
 }
 
-func (r *customerRepository) GetOptions(ctx context.Context) ([]entity.Customer, error) {
+func (r *customerRepository) GetOptions(ctx context.Context, status *constant.CustomerStatus) ([]entity.Customer, error) {
 	var data []entity.Customer
-	err := database.ExtractDB(ctx, r.db).
+	db := database.ExtractDB(ctx, r.db).
 		Select("id", "user_id").
 		Preload("User", func(db *gorm.DB) *gorm.DB {
 			return db.Select("id", "name")
-		}).
-		Order("id DESC").
-		Find(&data).Error
+		})
+	if status != nil {
+		db = db.Where("status = ?", *status)
+	}
+
+	err := db.Order("id DESC").Find(&data).Error
 	return data, err
 }
 

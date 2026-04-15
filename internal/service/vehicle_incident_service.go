@@ -89,7 +89,8 @@ func (s *vehicleIncidentService) Create(ctx context.Context, data CreateVehicleI
 	if err := s.repo.Create(ctx, &incident); err != nil {
 		return nil, err
 	}
-	return &incident, nil
+
+	return s.repo.GetByID(ctx, incident.ID)
 }
 
 func (s *vehicleIncidentService) GetByID(ctx context.Context, id uint) (*entity.VehicleIncident, error) {

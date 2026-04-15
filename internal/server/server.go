@@ -54,6 +54,7 @@ func registerRoutes(engine *gin.Engine, cfg config.Config, db *gorm.DB) {
 
 	userRepo := repository.NewUserRepository(db)
 	customerRepo := repository.NewCustomerRepository(db)
+	customerLogRepo := repository.NewCustomerLogRepository(db)
 	vehicleRepo := repository.NewVehicleRepository(db)
 	rentalRepo := repository.NewRentalRepository(db)
 	incidentRepo := repository.NewVehicleIncidentRepository(db)
@@ -61,6 +62,7 @@ func registerRoutes(engine *gin.Engine, cfg config.Config, db *gorm.DB) {
 	userSvc := service.NewUserService(db, userRepo)
 	authSvc := service.NewAuthService(userSvc, cfg.Auth.AccessTokenSecret, cfg.Auth.RefreshTokenSecret, cfg.Auth.TokenTTL)
 	customerSvc := service.NewCustomerService(db, userSvc, customerRepo)
+	customerLogSvc := service.NewCustomerLogService(db, customerLogRepo)
 	storageSvc := service.NewStorageService(cfg.Storage)
 	vehicleSvc := service.NewVehicleService(db, vehicleRepo)
 	incidentSvc := service.NewVehicleIncidentService(db, incidentRepo, vehicleSvc, rentalRepo)
@@ -68,6 +70,7 @@ func registerRoutes(engine *gin.Engine, cfg config.Config, db *gorm.DB) {
 
 	handler.NewAuthHandler(authSvc).RegisterRoutes(public)
 	handler.NewCustomerHandler(customerSvc, storageSvc).Register(protected)
+	handler.NewCustomerLogHandler(customerLogSvc).Register(protected)
 	handler.NewVehicleHandler(vehicleSvc).Register(protected)
 	handler.NewRentalHandler(rentalSvc).Register(protected)
 	handler.NewVehicleIncidentHandler(incidentSvc).Register(protected)
